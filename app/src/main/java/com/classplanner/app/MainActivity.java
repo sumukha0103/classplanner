@@ -187,7 +187,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setTextZoom(final int percent) {
-            runOnUiThread(() -> web.getSettings().setTextZoom(Math.max(80, Math.min(200, percent))));
+            runOnUiThread(() -> web.getSettings().setTextZoom(Math.max(50, Math.min(200, percent))));
         }
 
         @JavascriptInterface
