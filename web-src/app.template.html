@@ -98,6 +98,7 @@ textarea{resize:vertical;min-height:70px}
 .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
 .pill.A{background:var(--ok-soft);color:var(--ok)} .pill.M{background:var(--bad-soft);color:var(--bad)} .pill.C{background:var(--cond-soft);color:var(--cond)}
 .pill.U{background:var(--warn-soft);color:var(--warn)}
+.pill.X{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:9px 12px;font-size:13.5px;margin-top:10px}
 
 /* events (official = diamond) and own plans (outlined square) */
@@ -129,6 +130,7 @@ textarea{resize:vertical;min-height:70px}
 .chip{display:inline-flex;align-items:center;gap:4px;font:600 10.5px var(--f-mono);padding:2px 5px;border-radius:6px;background:color-mix(in srgb,var(--cc) 14%,var(--surface))}
 .chip i{width:7px;height:7px;border-radius:50%;background:var(--cc)}
 .chip.more{background:none;color:var(--muted)}
+.chip.x{opacity:.5;text-decoration:line-through}
 .cell .ev{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;padding:1px 6px;width:100%}
 .cell .ev::before{margin-right:4px}
 .cell .more{font-size:10.5px;color:var(--muted);font-weight:600}
@@ -155,6 +157,7 @@ textarea{resize:vertical;min-height:70px}
 .sname{font-weight:600;font-size:15.5px}
 .smeta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;color:var(--muted);font-size:13px;margin-top:4px}
 .srow.ev .sname{color:var(--muted);font-weight:500}
+.srow.cx .sname{color:var(--muted);text-decoration:line-through}
 .srow.plan .sname{display:flex;align-items:flex-start;gap:8px}
 .srow.plan.done .ptitle{text-decoration:line-through;color:var(--muted)}
 .srow.plan .acts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -164,8 +167,12 @@ textarea{resize:vertical;min-height:70px}
 .late-tag{font-size:11.5px;font-weight:600;color:var(--bad);background:var(--bad-soft);border-radius:99px;padding:1px 8px}
 
 /* attendance buttons */
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.seg.sm{margin-top:0}
+.segwrap{margin-top:10px;display:flex;flex-direction:column;align-items:stretch;gap:2px}
+.segwrap.sm{margin-top:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.xb{align-self:flex-start;border:0;background:none;color:var(--muted);font-size:12.5px;font-weight:600;padding:5px 2px;min-height:30px;text-decoration:underline;text-underline-offset:3px}
+.xb:hover{color:var(--ink)}
+.xb.on{background:var(--surface2);color:var(--ink);border-radius:8px;padding:5px 10px;text-decoration:none;border:1px solid var(--line)}
 .sb{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 2px;font-weight:600;font-size:12.5px;min-height:40px;white-space:nowrap;min-width:0}
 .seg.sm .sb{min-height:34px;font-size:12.5px;padding:5px 2px}
 .sb.a:hover:not(:disabled){border-color:var(--ok);color:var(--ok)} .sb.m:hover:not(:disabled){border-color:var(--bad);color:var(--bad)} .sb.c:hover:not(:disabled){border-color:var(--cond);color:var(--cond)}
@@ -218,10 +225,17 @@ textarea{resize:vertical;min-height:70px}
 .count{font:600 12px var(--f-mono);background:var(--bad);color:var(--fill-ink);border-radius:99px;padding:1px 8px}
 .qrow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding-block:12px;border-top:1px solid var(--line)}
 .qrow:first-of-type{margin-top:12px}
-.qrow .seg{margin-top:0}
 @media (min-width:760px){.qrow{grid-template-columns:minmax(0,1fr) 340px;align-items:center;gap:16px}}
 .qwhen{font:500 12.5px var(--f-mono);color:var(--muted)}
 .qwhat{font-weight:600}
+.skiprow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding-block:12px;border-top:1px solid var(--line)}
+.skiprow:first-of-type{margin-top:12px}
+@media (min-width:760px){.skiprow{grid-template-columns:minmax(0,1fr) 340px;align-items:center;gap:16px}}
+.skv{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.skv .nums{font:500 12.5px var(--f-mono);color:var(--muted)}
+.skv .why{font-size:12.5px;color:var(--muted)}
+.skipline{display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px;font-size:12.5px}
+.skipline .nums{font:500 12px var(--f-mono);color:var(--muted)}
 .caught{display:flex;gap:12px;align-items:center;color:var(--muted);margin-top:6px}
 .caught b{color:var(--ok)}
 .subs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:16px;margin-top:16px}
@@ -249,6 +263,20 @@ textarea{resize:vertical;min-height:70px}
 .pips{display:inline-flex;gap:3px}
 .pip{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted)}
 .pip.used{background:var(--bad);border-color:var(--bad)}
+.fc{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.fc .lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fc .lbl span:last-child{text-transform:none;letter-spacing:0;font-weight:500}
+.fbar{position:relative;height:10px;border-radius:99px;background:var(--line);margin-block:4px 18px}
+.fbar .band{position:absolute;top:0;bottom:0;border-radius:99px;background:color-mix(in srgb,var(--accent) 30%,var(--surface));border:1px solid var(--accent)}
+.fbar .now{position:absolute;top:-3px;width:4px;height:16px;margin-left:-2px;border-radius:2px;background:var(--ink)}
+.fbar .tick{position:absolute;left:85%;top:-4px;bottom:-4px;width:2px;background:var(--bad);border-radius:1px;opacity:.7}
+.fbar .tl{position:absolute;left:85%;top:14px;transform:translateX(-50%);font:600 10.5px var(--f-mono);color:var(--muted)}
+.fpair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fpair div{background:var(--surface2);border-radius:10px;padding:8px 10px;min-width:0}
+.fpair small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.fpair b{font:600 18px var(--f-mono)}
+.fnote{font-size:13px;color:var(--muted)}
+.fnote.bad{color:var(--bad);font-weight:600}.fnote.warn{color:var(--warn);font-weight:600}.fnote.ok{color:var(--ok);font-weight:600}
 .next{border-top:1px solid var(--line);padding-top:12px}
 .next .lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .next .what{font-weight:600;margin-top:2px}
@@ -366,7 +394,7 @@ var S = {
   courses: {}, info: null, months: {}, evs: {},            // shared: timetable + academic calendar
   marks: {}, hidden: {}, plans: [],                        // private to this account
   hideK: {}, allTerms: false, showAllUp: false, showAllDue: false,
-  modal: null, showAllQ: false, confirmAll: false, open: {}
+  modal: null, showAllQ: false, showAllSkip: false, confirmAll: false, open: {}
 };
 var R = {};
 var db = null;
@@ -487,6 +515,7 @@ function evTitle(e, mine) {
 }
 function prep() {
   var all = [];
+  R.stc = {};
   R.dayInfo = {};
   Object.keys(S.months).sort().forEach(function (ym) {
     var m = S.months[ym];
@@ -559,16 +588,14 @@ function initPos() {
   S.cur = S.sel.slice(0, 7);
 }
 function stats(ck) {
-  var list = R.byCourse[ck] || [];
-  var A = 0, M = 0, C = 0;
-  list.forEach(function (x) { if (x.st === 'A') A++; else if (x.st === 'M') M++; else if (x.st === 'C') C++; });
-  var held = A + M + C, allowed = co(ck).credits;
+  if (R.stc && R.stc[ck]) return R.stc[ck];
+  var list = R.byCourse[ck] || [], f = ttForecast(list, co(ck).credits);
   var pending = list.filter(function (x) { return !x.st && started(x); });
-  return {
-    A: A, M: M, C: C, held: held, allowed: allowed, total: list.length,
-    pct: held ? (A + C) * 100 / held : null,
-    pending: pending, next: list.filter(function (x) { return !started(x); })[0] || null
-  };
+  var left = list.filter(function (x) { return !x.st; });
+  f.pending = pending; f.next = list.filter(function (x) { return !x.st && !started(x); })[0] || null;
+  f.endD = left.length ? left[left.length - 1].d : (list.length ? list[list.length - 1].d : null);
+  (R.stc || (R.stc = {}))[ck] = f;
+  return f;
 }
 function fmtPct(p) { var r = Math.round(p * 10) / 10; return Number.isInteger(r) ? String(r) : r.toFixed(1); }
 
@@ -721,7 +748,7 @@ function applyImport() {
 function codeChip(ck) { return h('span', { class: 'code', style: '--cc:' + cvar(ck) }, h('i'), co(ck).code); }
 function seg(x, small) {
   var on = started(x);
-  var wrap = h('div', { class: 'seg' + (small ? ' sm' : ''), role: 'group', 'aria-label': 'Attendance for ' + co(x.c).name + ' on ' + fmtShort(x.d) });
+  var wrap = h('div', { class: 'seg', role: 'group', 'aria-label': 'Attendance for ' + co(x.c).name + ' on ' + fmtShort(x.d) });
   [['A', 'Attended', 'a'], ['M', 'Missed', 'm'], ['C', 'Condonation', 'c']].forEach(function (b) {
     wrap.append(h('button', {
       type: 'button', class: 'sb ' + b[2] + (x.st === b[0] ? ' on' : ''), 'aria-pressed': x.st === b[0] ? 'true' : 'false',
@@ -729,11 +756,35 @@ function seg(x, small) {
       onclick: function () { mark(x.key, x.st === b[0] ? null : b[0]); }
     }, b[1]));
   });
-  return wrap;
+  var cx = x.st === 'X';
+  return h('div', { class: 'segwrap' + (small ? ' sm' : '') }, wrap,
+    h('button', { type: 'button', class: 'xb' + (cx ? ' on' : ''), 'aria-pressed': cx ? 'true' : 'false', 'data-fk': x.key + 'X',
+      title: cx ? 'Tap to undo' : 'Faculty cancelled it: it will not count for or against you',
+      onclick: function () { mark(x.key, cx ? null : 'X'); } }, cx ? 'Cancelled · tap to undo' : 'Class cancelled?'));
+}
+function skipInfo(x) {           // can-I-skip numbers for one class that has not started and is not marked
+  if (x.st || started(x) || !tracked(x.c)) return null;
+  var f = stats(x.c);
+  return { f: f, s: ttSkip(f) };
+}
+function skipWhy(s) {
+  var p = function (v) { return fmtPct(v) + '%'; };
+  if (s.why === 'limit') return 'Over your miss limit';
+  if (s.why === 'pct') return 'You could not reach ' + MIN_PCT + '% if you miss this one';
+  if (s.why === 'last') return 'Uses your last allowed miss · best finish ' + p(s.bestIfMiss);
+  return s.left + (s.left === 1 ? ' miss' : ' misses') + ' left after · best finish ' + p(s.bestIfMiss);
+}
+function skipLine(x) {
+  var k = skipInfo(x); if (!k) return null;
+  var s = k.s, label = s.verdict === 'ok' ? 'Safe to skip' : s.verdict === 'warn' ? 'Last allowed miss' : 'Do not skip';
+  return h('div', { class: 'skipline' },
+    h('span', { class: 'status ' + s.verdict }, label),
+    h('span', { class: 'nums' }, 'Attend → ' + fmtPct(s.att) + '%  ·  Miss → ' + fmtPct(s.miss) + '%'),
+    h('span', { class: 'hint', style: 'margin:0' }, skipWhy(s)));
 }
 function stPill(x) {
-  if (!tracked(x.c)) return null;
-  if (x.st) return h('span', { class: 'pill ' + x.st }, x.st === 'A' ? 'Attended' : x.st === 'M' ? 'Missed' : 'Condonation');
+  if (!tracked(x.c) && x.st !== 'X') return null;
+  if (x.st) return h('span', { class: 'pill ' + x.st }, x.st === 'A' ? 'Attended' : x.st === 'M' ? 'Missed' : x.st === 'X' ? 'Cancelled' : 'Condonation');
   return started(x) ? h('span', { class: 'pill U' }, 'Not marked') : null;
 }
 function typeClass(t) { return /holiday/i.test(t) ? 'hol' : /off/i.test(t) ? 'off' : /buffer/i.test(t) ? 'buf' : 'ins'; }
@@ -810,10 +861,10 @@ function sessionRow(x, first) {
   var meta = [codeChip(x.c)];
   if (c.faculty && c.faculty !== 'NA') meta.push(h('span', null, c.faculty));
   meta.push(h('span', null, (x.n ? 'Session ' + x.n + ' · ' : '') + c.credits + (c.credits === 1 ? ' credit' : ' credits')));
-  return h('article', { class: 'srow' + (first ? ' first' : '') },
+  return h('article', { class: 'srow' + (x.st === 'X' ? ' cx' : '') + (first ? ' first' : '') },
     h('div', { class: 'stime' }, tp[0], h('span', { class: 'tend' }, tp[1] || '')),
     h('div', null, h('div', { class: 'sname' }, c.name), h('div', { class: 'smeta' }, meta),
-      tracked(x.c) ? seg(x) : h('p', { class: 'hint' }, 'Not tracked for attendance.')));
+      tracked(x.c) ? [seg(x), skipLine(x)] : h('p', { class: 'hint' }, 'Not tracked for attendance.')));
 }
 function planRow(it, first) {
   var p = it.p, T = todayS(), late = p.k === 'task' && !p.x && p.d < T;
@@ -872,7 +923,8 @@ function monthView() {
     var seen = {}, codes = [];
     list.forEach(function (x) { if (!seen[x.c]) { seen[x.c] = 1; codes.push(x.c); } });
     var chips = codes.slice(0, narrow ? 6 : 3).map(function (ck) {
-      return h('span', { class: 'chip', style: '--cc:' + cvar(ck) }, h('i'), h('span', { class: 't' }, co(ck).code.replace(/\s/, '')));
+      var allX = list.filter(function (x) { return x.c === ck; }).every(function (x) { return x.st === 'X'; });
+      return h('span', { class: 'chip' + (allX ? ' x' : ''), style: '--cc:' + cvar(ck) }, h('i'), h('span', { class: 't' }, co(ck).code.replace(/\s/, '')));
     });
     if (codes.length > chips.length) chips.push(h('span', { class: 'chip more' }, '+' + (codes.length - chips.length)));
     var pills = evs.map(function (ev) { return h('span', { class: 'ev ek-' + ev.k }, ev.title); }).concat(pls.map(planPill));
@@ -981,6 +1033,49 @@ function queue() {
   if (P.length > 8) card.append(h('button', { type: 'button', class: 'btn sm', style: 'margin-top:12px', onclick: function () { S.showAllQ = !S.showAllQ; render(); } }, S.showAllQ ? 'Show fewer' : 'Show all ' + P.length));
   return card;
 }
+function forecastBlock(f) {
+  if (!f.held && !f.R) return null;
+  var p = function (v) { return fmtPct(v) + '%'; };
+  var xnote = f.X ? h('p', { class: 'fnote' }, f.X + (f.X === 1 ? ' class' : ' classes') + ' cancelled, not counted.') : null;
+  if (!f.R) return h('div', { class: 'fc' }, h('div', { class: 'lbl' }, h('span', null, 'Forecast'), h('span', null, 'No classes left in the imported timetable')), xnote);
+  var notes = [];
+  if (f.overLimit) notes.push(h('p', { class: 'fnote bad' }, 'You are already over the miss limit (' + f.M + ' missed, ' + f.allowed + ' allowed).'));
+  else if (f.unreachable) notes.push(h('p', { class: 'fnote bad' }, 'Below ' + MIN_PCT + '% even if you attend every class left. Best possible finish: ' + p(f.best) + '.'));
+  else if (f.afford === 0) notes.push(h('p', { class: 'fnote warn' }, 'You cannot miss any more classes. Attend all ' + f.R + ' left to finish at ' + MIN_PCT + '%+.'));
+  else notes.push(h('p', { class: 'fnote ok' }, 'You can still miss ' + f.afford + ' of the ' + f.R + ' classes left and finish at ' + MIN_PCT + '%+.'));
+  if (f.low) notes.push(h('p', { class: 'fnote' }, f.need
+    ? 'You are below ' + MIN_PCT + '% now. Attend the next ' + f.need + (f.need === 1 ? ' class' : ' classes') + ' in a row to get back to ' + MIN_PCT + '%.'
+    : 'You cannot get back to ' + MIN_PCT + '% with the classes left in the imported timetable.'));
+  notes.push(xnote);
+  var bar = h('div', { class: 'fbar', role: 'img', 'aria-label': 'Finish between ' + p(f.worst) + ' and ' + p(f.best) + '; minimum ' + MIN_PCT + ' percent' },
+    h('div', { class: 'band', style: 'left:' + f.worst + '%;width:' + Math.max(f.best - f.worst, 1) + '%' }),
+    f.held ? h('span', { class: 'now', style: 'left:' + Math.min(100, f.pct) + '%', title: 'Now' }) : null,
+    h('span', { class: 'tick' }), h('span', { class: 'tl' }, MIN_PCT + '%'));
+  return h('div', { class: 'fc' },
+    h('div', { class: 'lbl' }, h('span', null, 'Forecast to ' + (f.endD ? fmtShort(f.endD) : 'the end')), h('span', null, f.R + (f.R === 1 ? ' class left' : ' classes left'))),
+    bar,
+    h('div', { class: 'fpair' }, h('div', null, h('small', null, 'Attend all left'), h('b', null, p(f.best))), h('div', null, h('small', null, 'Miss all left'), h('b', null, p(f.worst)))),
+    notes);
+}
+function skipCard() {
+  var items = R.all.filter(function (x) { return skipInfo(x); });
+  var card = h('section', { class: 'card', 'aria-label': 'Can I skip?' },
+    h('div', { class: 'qhead' }, h('h3', null, 'Can I skip?'), h('span', { class: 'spacer' }),
+      items.length > 6 ? h('button', { type: 'button', class: 'btn sm', onclick: function () { S.showAllSkip = !S.showAllSkip; render(); } }, S.showAllSkip ? 'Show fewer' : 'Show all ' + items.length) : null),
+    h('p', { class: 'hint' }, 'Your standing if you attend or miss just that class, with your other classes attended.'));
+  if (!items.length) { card.append(h('p', { class: 'empty-day' }, 'No upcoming classes left to check.')); return card; }
+  (S.showAllSkip ? items : items.slice(0, 6)).forEach(function (x) {
+    var k = skipInfo(x), s = k.s, label = s.verdict === 'ok' ? 'Safe to skip' : s.verdict === 'warn' ? 'Last allowed miss' : 'Do not skip';
+    card.append(h('div', { class: 'skiprow' },
+      h('div', null, h('div', { class: 'qwhen' }, fmtShort(x.d) + ' · ' + x.t), h('div', { class: 'qwhat' }, co(x.c).name),
+        h('div', { class: 'smeta' }, codeChip(x.c), h('span', null, x.n ? 'Session ' + x.n : ''))),
+      h('div', { class: 'skv' }, h('span', { class: 'status ' + s.verdict }, label),
+        h('span', { class: 'nums' }, 'Attend → ' + fmtPct(s.att) + '%  ·  Miss → ' + fmtPct(s.miss) + '%'),
+        h('span', { class: 'why' }, skipWhy(s)),
+        h('button', { type: 'button', class: 'xb' + (x.st === 'X' ? ' on' : ''), 'data-fk': 'sk' + x.key, onclick: function () { mark(x.key, 'X'); } }, 'Class cancelled?'))));
+  });
+  return card;
+}
 function subjectCard(ck) {
   var c = co(ck), st = stats(ck), isOpen = !!S.open[ck];
   var status, scls;
@@ -1007,7 +1102,8 @@ function subjectCard(ck) {
       h('div', { class: 'what' }, (nxt.n ? 'Session ' + nxt.n + ' · ' : '') + fmtShort(nxt.d) + ', ' + tparts(nxt.t)[0]), seg(nxt)]);
   } else {
     add(next, [h('div', { class: 'lbl' }, 'Next to mark'), h('div', { class: 'what' }, 'All marked so far'),
-      st.next ? h('p', { class: 'hint' }, 'Next class: ' + fmtShort(st.next.d) + ', ' + tparts(st.next.t)[0]) : null]);
+      st.next ? h('p', { class: 'hint' }, 'Next class: ' + fmtShort(st.next.d) + ', ' + tparts(st.next.t)[0]) : null,
+      st.next ? skipLine(st.next) : null]);
   }
   var list = R.byCourse[ck] || [];
   var log = h('div', null, h('button', { type: 'button', class: 'log-toggle', 'aria-expanded': isOpen ? 'true' : 'false', onclick: function () { S.open[ck] = !isOpen; render(); } }, (isOpen ? 'Hide' : 'Show') + ' class log (' + list.length + ')'));
@@ -1024,7 +1120,7 @@ function subjectCard(ck) {
   sub.push(h('span', null, c.credits + (c.credits === 1 ? ' credit' : ' credits')));
   return h('article', { class: 'card sc' },
     h('div', { class: 'sc-top' }, h('div', { style: 'min-width:0' }, h('h3', null, c.name), h('div', { class: 'meta' }, sub)), h('span', { class: 'status ' + scls }, status)),
-    metric, stat, next, log);
+    metric, stat, forecastBlock(st), next, log);
 }
 function attSection() {
   if (!R.hasData) return emptyState();
@@ -1033,7 +1129,7 @@ function attSection() {
   var subs = h('div', { class: 'subs' }, shown.map(subjectCard));
   var out = [
     h('div', { class: 'sec-head' }, h('h2', null, 'Attendance'), h('p', null, 'Minimum ' + MIN_PCT + '%. You can miss as many classes as the course has credits.')),
-    queue(), subs];
+    queue(), skipCard(), subs];
   if (hid.length) out.push(h('div', { class: 'hidden-list' }, 'Not tracked:', hid.map(function (k) {
     return h('span', null, co(k).code + ' · ' + co(k).name + ' ', h('button', { type: 'button', class: 'log-toggle', onclick: function () { setHidden(k, false); } }, 'Track'));
   })));

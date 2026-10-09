@@ -267,4 +267,36 @@ function planCalendar(state, C) {
   return { evs, diff: { total: C.events.length, replaced, byKind: C.byKind, range: C.range } };
 }
 
-if (typeof module !== 'undefined') module.exports = { parseTimetable, planImport, ttSessionKey, ttToISODate, ttParseCell, parseCalendar, planCalendar, ttDetectKind };
+/* ---------- attendance forecasting ----------
+   `list` = a subject's classes, each with st: 'A' attended, 'M' missed, 'C' condonation, 'X' cancelled (not held),
+   or falsy for classes not marked yet. Cancelled classes count for nothing. Percentages are over held classes. */
+const TT_MIN = 85;
+function ttOk(good, n) { return n === 0 || good * 100 >= TT_MIN * n; }   // integer maths: no rounding surprises at exactly 85%
+function ttForecast(list, allowed) {
+  let A = 0, M = 0, C = 0, X = 0, R = 0;
+  list.forEach(x => { if (x.st === 'A') A++; else if (x.st === 'M') M++; else if (x.st === 'C') C++; else if (x.st === 'X') X++; else R++; });
+  const held = A + M + C, good = A + C, n = held + R;
+  const f = { A, M, C, X, R, held, allowed, total: n, pct: held ? good * 100 / held : null,
+              best: n ? (good + R) * 100 / n : null, worst: n ? good * 100 / n : null };
+  f.overLimit = M > allowed;
+  f.unreachable = !ttOk(good + R, n);              // below 85% even if every remaining class is attended
+  let afford = -1;                                 // most of the remaining classes you can still miss
+  for (let m = 0; m <= R; m++) { if (M + m <= allowed && ttOk(good + R - m, n)) afford = m; else break; }
+  f.afford = afford;
+  f.need = null;                                   // classes in a row to attend to get back to 85% (only when below it now)
+  if (held > 0 && !ttOk(good, held)) for (let k = 1; k <= R; k++) if (ttOk(good + k, held + k)) { f.need = k; break; }
+  f.low = held > 0 && !ttOk(good, held);
+  return f;
+}
+function ttSkip(f) {                               // one class not yet held and not marked
+  const good = f.A + f.C, n = f.held + f.R;
+  let verdict, why;
+  if (f.M + 1 > f.allowed) { verdict = 'bad'; why = 'limit'; }
+  else if (!ttOk(good + f.R - 1, n)) { verdict = 'bad'; why = 'pct'; }
+  else if (f.M + 1 === f.allowed) { verdict = 'warn'; why = 'last'; }
+  else { verdict = 'ok'; why = 'safe'; }
+  return { att: (good + 1) * 100 / (f.held + 1), miss: good * 100 / (f.held + 1), bestIfMiss: n ? (good + f.R - 1) * 100 / n : null,
+           verdict, why, left: f.allowed - f.M - 1 };
+}
+
+if (typeof module !== 'undefined') module.exports = { parseTimetable, planImport, ttSessionKey, ttToISODate, ttParseCell, parseCalendar, planCalendar, ttDetectKind, ttForecast, ttSkip, ttOk };
