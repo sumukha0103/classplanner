@@ -298,6 +298,23 @@ textarea{resize:vertical;min-height:70px}
 .tgrow{display:flex;align-items:center;gap:12px;min-height:44px;font-weight:600}
 .tgrow input[type=checkbox]{width:22px;height:22px;flex:none}
 .rem-note{font-size:12.5px;color:var(--muted)}
+.swp{touch-action:pan-y}
+.swp:not(.swiping){transition:transform .15s,background .15s}
+.swiping{user-select:none;-webkit-user-select:none}
+.dayall{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.ended{background:var(--surface2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.arow{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line);padding-block:6px;font-weight:400}
+.arow input{width:22px;height:22px;flex:none}
+.arow .t{font-weight:600;color:var(--ink)}.arow .s{font-size:12.5px;color:var(--muted)}
+.banner{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13.5px;font-weight:600}
+.sres{display:flex;flex-direction:column;max-height:min(55vh,420px);overflow:auto}
+.sr-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:10px 2px}
+.sr-item .sk{grid-row:1/3;align-self:center;font:600 11px var(--f-mono);color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 7px;white-space:nowrap}
+.sr-item .st{font-weight:600}.sr-item .ss{font-size:12.5px;color:var(--muted)}
+.steps{margin:0;padding-left:20px;text-align:left;max-width:46ch;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.steps b{color:var(--ink)}
+.lbl2{font-weight:600;font-size:13px}
+.empty .sep{margin-block:8px}
 .modal h3{font-size:15px}
 .sep{border:0;border-top:1px solid var(--line);width:100%;margin:2px 0}
 .tot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
@@ -344,6 +361,8 @@ textarea{resize:vertical;min-height:70px}
 .modal .vseg{align-self:flex-start}
 #toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
 #toast.on{opacity:1}
+#toast.on.act{pointer-events:auto;border-radius:16px}
+#toast button{margin-left:14px;border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px 4px;min-height:28px}
 @media (min-width:760px){#toast{bottom:28px}}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
@@ -1111,6 +1130,7 @@ var IC = {
   cal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
   chk: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>',
   down: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 15v3.5A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>',
+  search: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>',
   trend: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18 9.5 12l3.5 3.5L20 7"/><path d="M15 7h5v5"/></svg>',
   gear: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   doc: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
@@ -1126,7 +1146,7 @@ var S = {
   tab: 'tt', view: 'month', cur: '', sel: '', posSet: false, loaded: false, mode: 'pending', uid: null, canImport: false,
   courses: {}, info: null, months: {}, evs: {},            // shared: timetable + academic calendar
   marks: {}, hidden: {}, plans: [],                        // private to this account
-  totals: {}, profile: { name: '', reg: '' }, rem: { cls: false, due: false, at: '18:00' }, moves: {}, extra: [],
+  totals: {}, archived: {}, undo: null, theme: 'system', tsize: 100, autoBk: true, lastBk: '', bkHide: '', profile: { name: '', reg: '' }, rem: { cls: false, due: false, at: '18:00' }, moves: {}, extra: [],
   hideK: {}, allTerms: false, showAllUp: false, showAllDue: false,
   showAllWk: false, modal: null, showAllQ: false, showAllSkip: false, qa: '', confirmAll: false, open: {}
 };
@@ -1141,8 +1161,12 @@ try {
   if (ui.view === 'month' || ui.view === 'week' || ui.view === 'day') S.view = ui.view;
   if (ui.hideK && typeof ui.hideK === 'object') S.hideK = ui.hideK;
   S.allTerms = !!ui.allTerms;
+  if (ui.theme === 'light' || ui.theme === 'dark') S.theme = ui.theme;
+  if (ui.tsize === 115 || ui.tsize === 130) S.tsize = ui.tsize;
+  if (ui.autoBk === false) S.autoBk = false;
+  S.lastBk = ui.lastBk || ''; S.bkHide = ui.bkHide || '';
 } catch (e) {}
-function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ tab: S.tab, view: S.view, hideK: S.hideK, allTerms: S.allTerms })); } catch (e) {} }
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ tab: S.tab, view: S.view, hideK: S.hideK, allTerms: S.allTerms, theme: S.theme, tsize: S.tsize, autoBk: S.autoBk, lastBk: S.lastBk, bkHide: S.bkHide })); } catch (e) {} }
 
 /* ---------- storage ----------
    Shared (only the owner/editors write): meta/courses, timetable/<ym>, events/<ym>.
@@ -1167,7 +1191,7 @@ function docData(k) {
   if (p[0] === 'tt') return clone(S.months[p[1]] || { sessions: [], days: {} });
   if (p[0] === 'ev') return { list: clone(S.evs[p[1]] || []) };
   if (p[0] === 'mk') return { m: clone(S.marks[p[1]] || {}) };
-  if (p[0] === 'pf') return { hidden: clone(S.hidden), totals: clone(S.totals), profile: clone(S.profile), rem: clone(S.rem) };
+  if (p[0] === 'pf') return { hidden: clone(S.hidden), archived: clone(S.archived), totals: clone(S.totals), profile: clone(S.profile), rem: clone(S.rem) };
   if (p[0] === 'aj') return { moves: clone(S.moves), extra: clone(S.extra) };
   return { list: clone(S.plans) };
 }
@@ -1189,12 +1213,12 @@ async function pump(k) {
   running[k] = false;
 }
 function saveLocal() {
-  try { localStorage.setItem(LOCKEY, JSON.stringify({ courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra })); } catch (e) {}
+  try { localStorage.setItem(LOCKEY, JSON.stringify({ courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, archived: S.archived, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra })); } catch (e) {}
 }
 function loadLocal() {
   try {
     var d = JSON.parse(localStorage.getItem(LOCKEY) || 'null');
-    if (d) { S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {}; S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.plans = d.plans || [];
+    if (d) { S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {}; S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.archived = d.archived || {}; S.plans = d.plans || [];
       S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || []; }
   } catch (e) {}
 }
@@ -1206,7 +1230,7 @@ async function connect() {
     if (window.claude && window.claude.use) { d = await window.claude.use('db'); u = await window.claude.use('user'); }
     if (d && u) uid = await u.id();
   } catch (e) { d = null; }
-  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); S.loaded = true; render(); return; }
+  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); loadUndo(); S.loaded = true; render(); return; }
   db = d; S.uid = uid; S.mode = 'db';
   try { S.canImport = !!(await u.canEdit()); } catch (e) { S.canImport = false; }
   var err = function (e) { toast('Sync problem: ' + ((e && e.message) || 'unknown error')); };
@@ -1227,11 +1251,11 @@ async function connect() {
     ready('ev');
   }, err);
   db.collection('data/users/' + uid).onSnapshot(function (q) {
-    S.marks = {}; S.hidden = {}; S.plans = []; S.totals = {}; S.moves = {}; S.extra = [];
+    S.marks = {}; S.hidden = {}; S.archived = {}; S.plans = []; S.totals = {}; S.moves = {}; S.extra = [];
     q.docs.forEach(function (x) {
       var v = x.data() || {};
       if (x.id.indexOf('marks-') === 0) S.marks[x.id.slice(6)] = clone(v.m || {});
-      else if (x.id === 'prefs') { S.hidden = clone(v.hidden || {}); S.totals = clone(v.totals || {}); S.profile = clone(v.profile || { name: '', reg: '' }); S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, v.rem || {}); }
+      else if (x.id === 'prefs') { S.hidden = clone(v.hidden || {}); S.archived = clone(v.archived || {}); S.totals = clone(v.totals || {}); S.profile = clone(v.profile || { name: '', reg: '' }); S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, v.rem || {}); }
       else if (x.id === 'adjust') { S.moves = clone(v.moves || {}); S.extra = clone(v.extra || []); }
       else if (x.id === 'plans') S.plans = clone(v.list || []);
     });
@@ -1243,7 +1267,7 @@ async function connect() {
 /* ---------- derived data ---------- */
 function co(ck) { return S.courses[ck] || { code: ck, name: ck, faculty: '', credits: 1, col: 0 }; }
 function cvar(ck) { return 'var(--c' + ((co(ck).col || 0) % 8) + ')'; }
-function tracked(ck) { return !S.hidden[ck]; }
+function tracked(ck) { return !S.hidden[ck] && !S.archived[ck]; }
 function termNum() { var m = /(\d+)/.exec((S.info && S.info.term) || ''); return m ? +m[1] : null; }
 function myTerms() { var n = termNum(); return n == null || S.allTerms ? null : [n - 1, n, n + 1]; }
 function evTitle(e, mine) {
@@ -1365,20 +1389,44 @@ function fmtPct(p) { var r = Math.round(p * 10) / 10; return Number.isInteger(r)
 
 /* ---------- actions ---------- */
 function ymOfKey(k) { return k.slice(0, 4) + '-' + k.slice(4, 6); }
-function mark(key, st) {
-  var ym = ymOfKey(key), m = S.marks[ym] || (S.marks[ym] = {});
+var MARK_LBL = { A: 'Attended', M: 'Missed', C: 'Condonation', X: 'Cancelled' };
+function curMark(key) { var m = S.marks[ymOfKey(key)]; return (m && m[key]) || null; }
+function mark(key, st, quiet) {
+  var prev = curMark(key), ym = ymOfKey(key), m = S.marks[ym] || (S.marks[ym] = {});
   if (st) m[key] = st; else delete m[key];
   save('mk:' + ym);
   render();
+  if (!quiet) toast(st ? 'Marked ' + MARK_LBL[st] : 'Cleared', { label: 'Undo', fn: function () { mark(key, prev, true); toast('Undone'); } });
 }
 function markMany(keys, st) {
-  var yms = {};
-  keys.forEach(function (k) { var ym = ymOfKey(k); (S.marks[ym] || (S.marks[ym] = {}))[k] = st; yms[ym] = 1; });
+  var yms = {}, prevs = {};
+  keys.forEach(function (k) { var ym = ymOfKey(k); prevs[k] = curMark(k); (S.marks[ym] || (S.marks[ym] = {}))[k] = st; yms[ym] = 1; });
   Object.keys(yms).forEach(function (ym) { save('mk:' + ym); });
   S.confirmAll = false;
   render();
-  toast(keys.length + ' classes marked as Attended');
+  toast(keys.length + (keys.length === 1 ? ' class' : ' classes') + ' marked as ' + MARK_LBL[st], { label: 'Undo', fn: function () {
+    keys.forEach(function (k) { var ym = ymOfKey(k), m = S.marks[ym] || (S.marks[ym] = {}); if (prevs[k]) m[k] = prevs[k]; else delete m[k]; });
+    Object.keys(yms).forEach(function (ym) { save('mk:' + ym); });
+    render(); toast('Undone');
+  } });
 }
+function finishedCourse(ck) { var l = R.byCourse[ck] || []; return l.length > 0 && l.every(function (x) { return started(x); }); }
+function lastClass(ck) { var l = R.byCourse[ck] || []; return l.length ? l[l.length - 1].d : null; }
+function openArchive(pre) {
+  var T = todayS(), sel = {};
+  Object.keys(R.byCourse).filter(tracked).forEach(function (ck) {
+    var f = stats(ck), last = lastClass(ck);
+    sel[ck] = pre ? pre.indexOf(ck) >= 0 : (finishedCourse(ck) && (f.R === 0 || (last && daysBetween(last, T) >= 21)));
+  });
+  S.modal = { stage: 'archive', sel: sel };
+  render();
+}
+function archiveCourses(keys) {
+  keys.forEach(function (k) { S.archived[k] = true; });
+  save('pf'); S.modal = null; render();
+  toast(keys.length + (keys.length === 1 ? ' course' : ' courses') + ' archived', { label: 'Undo', fn: function () { keys.forEach(function (k) { delete S.archived[k]; }); save('pf'); render(); toast('Restored'); } });
+}
+function unarchive(ck) { delete S.archived[ck]; save('pf'); if (S.modal && S.modal.stage === 'archive') S.modal.sel[ck] = false; render(); toast('Course back on your lists'); }
 function setHidden(ck, v) { if (v) S.hidden[ck] = true; else delete S.hidden[ck]; save('pf'); render(); }
 function setTab(t) { S.tab = t; saveUI(); render(); window.scrollTo(0, 0); }
 function setView(v) { S.view = v; saveUI(); render(); }
@@ -1396,9 +1444,15 @@ function step(dir) {
 function goToday() { S.sel = todayS(); S.cur = S.sel.slice(0, 7); render(); }
 function toggleK(k) { if (S.hideK[k]) delete S.hideK[k]; else S.hideK[k] = true; saveUI(); render(); }
 var toastT;
-function toast(msg) {
-  var t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 3200);
+function toast(msg, act) {
+  var t = $('#toast'); t.replaceChildren(document.createTextNode(msg)); t.classList.toggle('act', !!act);
+  if (act) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = act.label || 'Undo';
+    b.addEventListener('click', function () { t.classList.remove('on'); clearTimeout(toastT); act.fn(); });
+    t.append(b);
+  }
+  t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, act ? 7000 : 3200);
 }
 
 /* my plans */
@@ -1454,19 +1508,37 @@ function saveMove() {
   if (!f.d) return bad('Pick a date.');
   if (!SLOT_T[s]) return bad('Choose a class time.');
   if (R.all.some(function (y) { return y.key !== M.key && y.d === f.d && y.s === s && y.c === M.c; })) return bad('This subject already has a class then.');
+  var prevMove = S.moves[M.key], prevExtra = M.extra ? S.extra.filter(function (e) { return e.id === M.id; })[0] : null;
   if (M.extra) S.extra = S.extra.map(function (e) { return e.id === M.id ? Object.assign({}, e, { d: f.d, s: s }) : e; });
   else if (f.d === M.from.d && s === M.from.s) delete S.moves[M.key];
   else S.moves[M.key] = { d: f.d, s: s };
-  save('aj'); S.modal = null; S.sel = f.d; S.cur = f.d.slice(0, 7); render(); toast(M.extra ? 'Saved' : 'Class rescheduled');
+  save('aj'); S.modal = null; S.sel = f.d; S.cur = f.d.slice(0, 7); render();
+  toast(M.extra ? 'Saved' : 'Class rescheduled', { label: 'Undo', fn: function () {
+    if (M.extra) S.extra = S.extra.map(function (e) { return e.id === M.id ? prevExtra : e; });
+    else if (prevMove) S.moves[M.key] = prevMove; else delete S.moves[M.key];
+    save('aj'); render(); toast('Undone');
+  } });
 }
-function restoreMove() { var M = S.modal; delete S.moves[M.key]; save('aj'); S.sel = M.from.d; S.cur = M.from.d.slice(0, 7); S.modal = null; render(); toast('Back to the original time'); }
+function restoreMove() {
+  var M = S.modal, prev = S.moves[M.key]; delete S.moves[M.key]; save('aj'); S.sel = M.from.d; S.cur = M.from.d.slice(0, 7); S.modal = null; render();
+  toast('Back to the original time', prev ? { label: 'Undo', fn: function () { S.moves[M.key] = prev; save('aj'); render(); toast('Undone'); } } : null);
+}
 function deleteExtra() {
-  var M = S.modal, ym = ymOfKey(M.key);
+  var M = S.modal, ym = ymOfKey(M.key), e0 = S.extra.filter(function (e) { return e.id === M.id; })[0], mk0 = curMark(M.key);
   S.extra = S.extra.filter(function (e) { return e.id !== M.id; });
   if (S.marks[ym] && S.marks[ym][M.key]) { delete S.marks[ym][M.key]; save('mk:' + ym); }
-  save('aj'); S.modal = null; render(); toast('Class removed');
+  save('aj'); S.modal = null; render();
+  toast('Class removed', e0 ? { label: 'Undo', fn: function () {
+    S.extra = S.extra.concat([e0]);
+    if (mk0) { (S.marks[ym] || (S.marks[ym] = {}))[M.key] = mk0; save('mk:' + ym); }
+    save('aj'); render(); toast('Restored');
+  } } : null);
 }
-function deletePlan(id) { S.plans = S.plans.filter(function (p) { return p.id !== id; }); save('pl'); S.modal = null; render(); toast('Deleted'); }
+function deletePlan(id) {
+  var p = planById(id);
+  S.plans = S.plans.filter(function (q) { return q.id !== id; }); save('pl'); S.modal = null; render();
+  toast('Deleted', p ? { label: 'Undo', fn: function () { S.plans = S.plans.concat([p]); save('pl'); render(); toast('Restored'); } } : null);
+}
 function toggleDone(id) {
   var p = planById(id); if (!p) return;
   if (p.x) delete p.x; else p.x = true;
@@ -1476,18 +1548,56 @@ function toggleDone(id) {
 /* backup + restore (phone-only storage) */
 function backupObj() {
   return { app: 'class-planner', v: 1, saved: new Date().toISOString(),
-    data: { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra } };
+    data: { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, archived: S.archived, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra } };
 }
-function exportBackup() {
-  var json = JSON.stringify(backupObj()), name = 'class-planner-backup-' + todayS() + '.json';
+function markBackedUp() { S.lastBk = todayS(); S.bkHide = ''; saveUI(); }
+function hasAnyData() { return Object.keys(S.months).length > 0 || S.plans.length > 0; }
+function exportBackup(auto) {
+  var json = JSON.stringify(backupObj()), name = 'class-planner-' + (auto ? 'auto' : 'backup') + '-' + todayS() + '.json', B = window.AndroidBridge;
   try {
-    if (window.AndroidBridge && window.AndroidBridge.saveBackup) { window.AndroidBridge.saveBackup(name, json); return; }
+    if (auto) { if (!(B && B.autoBackup)) return false; B.autoBackup(name, json); markBackedUp(); return true; }
+    if (B && B.saveBackup) { B.saveBackup(name, json); markBackedUp(); render(); return true; }
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
     a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    markBackedUp(); render();
     toast('Backup saved: ' + name);
-  } catch (e) { toast('Could not save the backup.'); }
+    return true;
+  } catch (e) { toast('Could not save the backup.'); return false; }
 }
+var autoDay = '';
+function maybeAutoBackup() {          // phone app: save a copy to Downloads about once a week
+  if (S.mode !== 'local' || !S.loaded || !S.autoBk || !hasAnyData() || autoDay === todayS()) return;
+  if (!(window.AndroidBridge && window.AndroidBridge.autoBackup)) return;
+  autoDay = todayS();
+  if (S.lastBk && daysBetween(S.lastBk, todayS()) < 7) return;
+  exportBackup(true);
+}
+function bkAgeText() {
+  if (!S.lastBk) return 'No backup saved yet';
+  var d = daysBetween(S.lastBk, todayS());
+  return 'Last backup ' + fmtShort(S.lastBk) + (d === 0 ? ' (today)' : d === 1 ? ' (yesterday)' : ' (' + d + ' days ago)');
+}
+function bkBanner() {
+  var native = !!(window.AndroidBridge && window.AndroidBridge.autoBackup);
+  if (S.mode !== 'local' || !hasAnyData() || (native && S.autoBk) || S.bkHide === todayS()) return null;
+  var d = S.lastBk ? daysBetween(S.lastBk, todayS()) : 999;
+  if (d < 14) return null;
+  return h('div', { class: 'banner', role: 'status' },
+    h('span', null, S.lastBk ? 'Your last backup was ' + d + ' days ago. Everything lives only on this device.' : 'You have not saved a backup yet. Everything lives only on this device.'),
+    h('span', { class: 'actions' },
+      h('button', { type: 'button', class: 'btn sm pri', onclick: function () { exportBackup(false); } }, ic('down'), 'Back up now'),
+      h('button', { type: 'button', class: 'btn sm', onclick: function () { S.bkHide = todayS(); saveUI(); render(); } }, 'Not today')));
+}
+function applyLook() {
+  var r = document.documentElement, B = window.AndroidBridge;
+  if (S.theme === 'light' || S.theme === 'dark') { r.setAttribute('data-theme', S.theme); r.style.colorScheme = S.theme; }
+  else { r.removeAttribute('data-theme'); r.style.colorScheme = ''; }
+  if (B && B.setTextZoom) B.setTextZoom(S.tsize);
+  else { var a = document.getElementById('app'); if (a) a.style.zoom = S.tsize === 100 ? '' : String(S.tsize / 100); }
+}
+function setTheme(v) { S.theme = v; saveUI(); applyLook(); render(); }
+function setTsize(v) { S.tsize = v; saveUI(); applyLook(); render(); }
 async function onRestoreFile(file) {
   try {
     var o = JSON.parse(await file.text());
@@ -1500,7 +1610,7 @@ async function onRestoreFile(file) {
 function applyRestore() {
   var d = S.modal.o.data;
   S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {};
-  S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.plans = d.plans || [];
+  S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.archived = d.archived || {}; S.plans = d.plans || [];
   S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || [];
   saveLocal(); S.modal = null; S.posSet = false; S.sel = ''; render(); toast('Backup restored');
 }
@@ -1526,13 +1636,32 @@ async function onFile(file) {
   } catch (e) { S.modal = { stage: 'error', msg: (e && e.message) || 'Could not read that file.' }; }
   render();
 }
+function saveUndo() { if (db) return; try { if (S.undo) localStorage.setItem('cp-undo', JSON.stringify(S.undo)); else localStorage.removeItem('cp-undo'); } catch (e) {} }
+function loadUndo() { try { var u = JSON.parse(localStorage.getItem('cp-undo') || 'null'); if (u && u.at) S.undo = u; } catch (e) {} }
+function undoImport() {
+  var u = S.undo; if (!u) return;
+  Object.keys(u.evs).forEach(function (ym) { if (u.evs[ym]) S.evs[ym] = u.evs[ym]; else delete S.evs[ym]; save('ev:' + ym); });
+  Object.keys(u.months).forEach(function (ym) { if (u.months[ym]) S.months[ym] = u.months[ym]; else delete S.months[ym]; save('tt:' + ym); });
+  Object.keys(u.marks).forEach(function (ym) { if (u.marks[ym]) S.marks[ym] = u.marks[ym]; else delete S.marks[ym]; save('mk:' + ym); });
+  if (u.courses) { S.courses = u.courses; S.info = u.info; save('meta'); }
+  S.undo = null; saveUndo(); S.modal = null; render(); toast('Import undone');
+}
 function applyImport() {
   var M = S.modal, plan = M.plan;
+  var snap = { kind: M.kind === 'cal' ? 'calendar' : 'timetable', at: Date.now(), months: {}, marks: {}, evs: {}, courses: null, info: null };
+  if (M.kind === 'cal') Object.keys(plan.evs).forEach(function (ym) { snap.evs[ym] = S.evs[ym] ? clone(S.evs[ym]) : null; });
+  else {
+    Object.keys(plan.months).forEach(function (ym) { snap.months[ym] = S.months[ym] ? clone(S.months[ym]) : null; });
+    Object.keys(plan.marks).forEach(function (ym) { snap.marks[ym] = S.marks[ym] ? clone(S.marks[ym]) : null; });
+    snap.courses = clone(S.courses); snap.info = S.info ? clone(S.info) : null;
+  }
+  S.undo = snap; saveUndo();
+  var undoAct = { label: 'Undo', fn: undoImport };
   if (M.kind === 'cal') {
     Object.keys(plan.evs).forEach(function (ym) { S.evs[ym] = plan.evs[ym]; save('ev:' + ym); });
     var T0 = todayS(), r0 = plan.diff.range;
     S.sel = T0 >= r0[0] && T0 <= r0[1] ? T0 : r0[0]; S.cur = S.sel.slice(0, 7);
-    S.modal = null; S.posSet = true; render(); toast('Academic calendar imported');
+    S.modal = null; S.posSet = true; render(); toast('Academic calendar imported', undoAct);
     return;
   }
   Object.keys(plan.months).forEach(function (ym) { S.months[ym] = plan.months[ym]; save('tt:' + ym); });
@@ -1542,7 +1671,10 @@ function applyImport() {
   S.sel = T >= r[0] && T <= r[1] ? T : r[0]; S.cur = S.sel.slice(0, 7);
   S.modal = null; S.posSet = true;
   render();
-  toast('Timetable imported');
+  toast('Timetable imported', undoAct);
+  var inFile = (M.P && M.P.courses) || {};
+  var gone = Object.keys(R.byCourse).filter(function (ck) { return tracked(ck) && !inFile[ck] && finishedCourse(ck); });
+  if (gone.length) openArchive(gone);
 }
 
 /* ---------- components ---------- */
@@ -1619,17 +1751,27 @@ function header() {
   return h('header', { class: 'top' },
     h('div', { class: 'brand' }, h('h1', null, 'Class Planner'), sub && h('p', null, sub)),
     nav, h('span', { class: 'spacer' }),
+    h('button', { type: 'button', class: 'btn', 'aria-label': 'Search', onclick: function () { S.modal = { stage: 'search', q: '' }; render(); } }, ic('search'), h('span', { class: 'lbl' }, 'Search')),
     S.mode === 'local' ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Settings, reminders and backup', onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('gear'), h('span', { class: 'lbl' }, 'Settings')) : null,
     S.canImport ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Import timetable or calendar', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), h('span', { class: 'lbl' }, 'Import')) : null);
 }
 
 function emptyState() {
+  var local = S.mode === 'local';
   return h('div', { class: 'card empty' },
     h('h2', null, 'No timetable yet'),
     S.canImport
-      ? [h('p', null, 'Import your monthly timetable (.xlsx) and every class will appear here, ready to be marked Attended, Missed or Condonation. You can also import the academic calendar.'),
-         h('div', { class: 'actions', style: 'justify-content:center' }, h('button', { type: 'button', class: 'btn pri', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import'),
-           S.mode === 'local' ? h('button', { type: 'button', class: 'btn', onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('down'), 'Restore a backup') : null)]
+      ? [h('p', null, 'Welcome. Set up in two steps:'),
+         h('ol', { class: 'steps' },
+           h('li', null, h('b', null, 'Import your monthly timetable'), ' (.xlsx). Every class appears, ready to be marked Attended, Missed or Condonation.'),
+           h('li', null, h('b', null, 'Import the academic calendar'), ' (.xlsx, optional) for holidays, exams and the exam countdown.')),
+         h('div', { class: 'actions', style: 'justify-content:center' }, h('button', { type: 'button', class: 'btn pri', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import a file')),
+         local ? [
+           h('hr', { class: 'sep' }),
+           h('h3', null, 'New phone, or reinstalled the app?'),
+           h('p', null, 'Restore from the backup file you saved. It is a .json file in your Downloads folder, named class-planner-backup-… or class-planner-auto-…. Copy it to this phone first if it is on another device or in Google Drive.'),
+           h('label', { class: 'drop', for: 'rs-file0' }, ic('up'), 'Restore from a backup file', h('span', null, 'Brings back your timetable, attendance and plans'),
+             h('input', { id: 'rs-file0', type: 'file', class: 'sr', accept: '.json,application/json', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } }))] : null]
       : h('p', null, 'The timetable has not been added yet. It will show up here once the owner imports it.'));
 }
 
@@ -1659,6 +1801,28 @@ function filterRow() {
   row.append(h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn sm pri', onclick: function () { openPlan(null, S.sel); } }, ic('plus'), 'Add'));
   return row;
 }
+function swipeable(el, onDone) {
+  var sx = 0, sy = 0, dx = 0, on = false, locked = false;
+  el.classList.add('swp');
+  var reset = function () { el.style.transform = ''; el.style.background = ''; el.classList.remove('swiping'); };
+  el.addEventListener('pointerdown', function (e) { if (e.target.closest && e.target.closest('button,input,select,textarea,a')) return; on = true; locked = false; sx = e.clientX; sy = e.clientY; dx = 0; });
+  el.addEventListener('pointermove', function (e) {
+    if (!on) return;
+    dx = e.clientX - sx; var dy = e.clientY - sy;
+    if (!locked) {
+      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { on = false; return; }
+      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) { locked = true; el.classList.add('swiping'); try { el.setPointerCapture(e.pointerId); } catch (x) {} }
+    }
+    if (locked) {
+      var c = Math.max(-130, Math.min(130, dx));
+      el.style.transform = 'translateX(' + c + 'px)';
+      el.style.background = 'color-mix(in srgb,' + (c > 0 ? 'var(--ok)' : 'var(--bad)') + ' ' + Math.round(Math.min(Math.abs(c), 100) * 0.22) + '%,var(--surface))';
+    }
+  });
+  var end = function (cancel) { if (!on) return; on = false; var go = locked && !cancel && Math.abs(dx) >= 80; var d = dx; locked = false; reset(); if (go) onDone(d > 0 ? 'A' : 'M'); };
+  el.addEventListener('pointerup', function () { end(false); });
+  el.addEventListener('pointercancel', function () { end(true); });
+}
 function sessionRow(x, first) {
   var c = co(x.c), tp = tparts(x.t);
   var meta = [codeChip(x.c)];
@@ -1666,11 +1830,13 @@ function sessionRow(x, first) {
   meta.push(h('span', null, (x.n ? 'Session ' + x.n + ' · ' : '') + c.credits + (c.credits === 1 ? ' credit' : ' credits')));
   if (x.moved) meta.push(h('span', { class: 'mv-tag' }, 'Moved from ' + fmtShort(x.moved.d) + ', ' + tparts(x.moved.t)[0]));
   if (x.extra) meta.push(h('span', { class: 'mv-tag' }, 'One-off class'));
-  return h('article', { class: 'srow' + (x.st === 'X' ? ' cx' : '') + (first ? ' first' : '') },
+  var row = h('article', { class: 'srow' + (x.st === 'X' ? ' cx' : '') + (first ? ' first' : '') },
     h('div', { class: 'stime' }, tp[0], h('span', { class: 'tend' }, tp[1] || '')),
     h('div', null, h('div', { class: 'sname' }, c.name), h('div', { class: 'smeta' }, meta),
-      tracked(x.c) ? seg(x) : h('p', { class: 'hint' }, 'Not tracked for attendance.'),
+      tracked(x.c) ? seg(x) : h('p', { class: 'hint' }, S.archived[x.c] ? 'Archived course' + (x.st ? ' · ' + MARK_LBL[x.st] : '') : 'Not tracked for attendance.'),
       h('div', { class: 'acts' }, h('button', { type: 'button', class: 'btn sm', 'data-fk': 'mv-' + x.key, onclick: function () { openMove(x); } }, x.extra ? 'Edit this class' : 'Reschedule'))));
+  if (tracked(x.c) && x.st !== 'X' && started(x)) swipeable(row, function (st) { mark(x.key, st); });
+  return row;
 }
 function planRow(it, first) {
   var p = it.p, T = todayS(), late = p.k === 'task' && !p.x && p.d < T;
@@ -1688,6 +1854,7 @@ function planRow(it, first) {
     left, h('div', null, h('div', { class: 'sname' }, title), h('div', { class: 'smeta' }, meta),
       h('div', { class: 'acts' }, h('button', { type: 'button', class: 'btn sm', onclick: function () { openPlan(p.id); } }, 'Edit'))));
 }
+function endedX(x) { var T = todayS(); if (x.d < T) return true; if (x.d > T) return false; var e = endHHMM(x.t); if (!e) return false; var n = new Date(); return n.getHours() * 60 + n.getMinutes() >= toMin(e); }
 function dayPanel(d) {
   var info = R.dayInfo[d] || null, list = R.byDate[d] || [], evs = R.evByDate[d] || [], pls = R.plByDate[d] || [];
   var head = h('div', { class: 'dp-head' }, h('h3', null, fmtLong(d)),
@@ -1695,6 +1862,11 @@ function dayPanel(d) {
     h('span', { class: 'spacer' }),
     h('button', { type: 'button', class: 'btn sm', onclick: function () { openPlan(null, d); } }, ic('plus'), 'Add'));
   var body = [];
+  var openToday = list.filter(function (x) { return !x.st && tracked(x.c); });
+  if (openToday.length && list.every(endedX)) body.push(h('div', { class: 'dayall' },
+    h('button', { type: 'button', class: 'btn sm pri', 'data-fk': 'markday', onclick: function () { markMany(openToday.map(function (x) { return x.key; }), 'A'); } },
+      'I attended all ' + (openToday.length === 1 ? 'the unmarked class' : openToday.length + ' unmarked classes')),
+    h('span', { class: 'hint', style: 'margin:0' }, 'Marks them Attended. You can undo it.')));
   if (R.clash[d]) body.push(h('p', { class: 'note' }, 'The academic calendar lists "' + R.clash[d].title + '", but classes are scheduled that day. Check with the programme office.'));
   else if (info && /holiday/i.test(info.type) && list.length) body.push(h('p', { class: 'note' }, 'The source timetable marks this day as a holiday, but classes are scheduled. Check with the programme office.'));
   evs.forEach(function (ev) { body.push(h('div', { class: 'evrow' }, evPill(ev, true))); });
@@ -1876,7 +2048,7 @@ function weekCard() {
 }
 function ttSection() {
   if (!R.hasData) return emptyState();
-  return h('div', null, countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
+  return h('div', null, bkBanner(), countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
 }
 
 /* ----- attendance ----- */
@@ -1894,11 +2066,14 @@ function queue() {
     card.append(h('p', { class: 'caught' }, h('b', null, 'All caught up.'), nx ? ' Next class: ' + fmtShort(nx.d) + ', ' + tparts(nx.t)[0] + ' · ' + co(nx.c).name : ''));
     return card;
   }
+  card.append(h('p', { class: 'hint' }, 'Tip: swipe a class right for Attended, left for Missed.'));
   var shown = S.showAllQ ? P : P.slice(0, 8);
   shown.forEach(function (x) {
-    card.append(h('div', { class: 'qrow' },
+    var qr = h('div', { class: 'qrow' },
       h('div', null, h('div', { class: 'qwhen' }, fmtShort(x.d) + ' · ' + x.t), h('div', { class: 'qwhat' }, co(x.c).name),
-        h('div', { class: 'smeta' }, codeChip(x.c), h('span', null, x.n ? 'Session ' + x.n : ''))), seg(x, true)));
+        h('div', { class: 'smeta' }, codeChip(x.c), h('span', null, x.n ? 'Session ' + x.n : ''))), seg(x, true));
+    swipeable(qr, function (st) { mark(x.key, st); });
+    card.append(qr);
   });
   if (P.length > 8) card.append(h('button', { type: 'button', class: 'btn sm', style: 'margin-top:12px', onclick: function () { S.showAllQ = !S.showAllQ; render(); } }, S.showAllQ ? 'Show fewer' : 'Show all ' + P.length));
   return card;
@@ -1948,6 +2123,7 @@ function skipCard() {
 }
 function statusOf(st) {
   if (!st.held) return ['Not started', 'idle'];
+  if (st.R === 0) return ['Complete · ' + fmtPct(st.pct) + '%', st.M <= st.allowed && ttOk(st.A + st.C, st.held) ? 'ok' : 'bad'];
   if (st.M > st.allowed) return ['Limit exceeded', 'bad'];
   if (st.M === st.allowed) return ['No misses left', 'warn'];
   var left = st.allowed - st.M;
@@ -1997,7 +2173,7 @@ function subjectCard(ck) {
 function attSection() {
   if (!R.hasData) return emptyState();
   var keys = Object.keys(R.byCourse).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
-  var shown = keys.filter(tracked), hid = keys.filter(function (k) { return !tracked(k); });
+  var shown = keys.filter(tracked), hid = keys.filter(function (k) { return !tracked(k) && !S.archived[k]; });
   var subs = h('div', { class: 'subs' }, shown.map(subjectCard));
   var out = [
     h('div', { class: 'sec-head' }, h('h2', null, 'Attendance'), h('p', null, 'Minimum ' + MIN_PCT + '%. You can miss as many classes as the course has credits.'), h('span', { class: 'spacer' }), reportBtn()),
@@ -2027,14 +2203,23 @@ function fcCard(ck) {
   return h('article', { class: 'card sc' },
     h('div', { class: 'sc-top' }, h('div', { style: 'min-width:0' }, h('h3', null, c.name), h('div', { class: 'meta' }, sub)), h('span', { class: 'status ' + sc[1] }, sc[0])),
     h('p', { class: 'fnote' }, line + (f.pct != null ? ' · now ' + fmtPct(f.pct) + '%' : '')),
-    forecastBlock(f), tot);
+    forecastBlock(f), endedNote(ck, f), tot);
+}
+function endedNote(ck, f) {
+  var last = lastClass(ck), T = todayS();
+  var done = f.held > 0 && f.R === 0;
+  var noMore = finishedCourse(ck) && f.R > 0 && last && daysBetween(last, T) >= 7 && R.all.some(function (x) { return !started(x) && x.c !== ck && tracked(x.c); });
+  if (!done && !noMore) return null;
+  return h('div', { class: 'ended' },
+    h('p', null, done ? 'All sessions are done. This course is complete.' : 'No more classes for this course on your timetable (' + f.held + ' of ' + f.term + ' held, last on ' + fmtShort(last) + '). If it is over, archive it. If more sessions are coming, they will show up when you import the next timetable.'),
+    h('button', { type: 'button', class: 'btn sm', onclick: function () { archiveCourses([ck]); } }, 'Archive this course'));
 }
 function fcSection() {
   if (!R.hasData) return emptyState();
   var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
   return h('div', null,
     h('div', { class: 'sec-head' }, h('h2', null, 'Forecast'), h('p', null, 'Each credit has ' + PER_CREDIT + ' sessions (1 credit = 8, 2 = 16, 3 = 24). You may miss as many sessions as the credits, and must stay at ' + MIN_PCT + '%.'),
-      h('span', { class: 'spacer' }), reportBtn()),
+      h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn sm', onclick: function () { openArchive(null); } }, 'End of term'), reportBtn()),
     skipCard(),
     h('div', { class: 'subs' }, keys.map(fcCard)),
     h('p', { class: 'foot' }, 'Cancelled classes are not counted, so the course still has all its sessions to go. If a course has a different number of sessions (for example a one-off test), change it on its card.'));
@@ -2043,9 +2228,49 @@ function reportBtn() {
   return h('button', { type: 'button', class: 'btn sm', onclick: function () { S.modal = { stage: 'report', busy: false }; render(); } }, ic('doc'), 'Report');
 }
 
+/* ----- search ----- */
+function searchItems(q) {
+  var toks = String(q || '').toLowerCase().split(/\s+/).filter(Boolean), out = [], T = todayS();
+  if (!toks.length) return out;
+  var has = function (s) { s = s.toLowerCase(); return toks.every(function (k) { return s.indexOf(k) >= 0; }); };
+  Object.keys(R.byCourse).forEach(function (ck) {
+    var c = co(ck);
+    R.byCourse[ck].forEach(function (x) {
+      if (has([c.name, c.code, c.code.replace(/\s/g, ''), c.faculty, fmtShort(x.d), x.d, 'session ' + (x.n || ''), x.t, x.st ? MARK_LBL[x.st] : ''].join(' ')))
+        out.push({ d: x.d, kind: 'Class', title: c.name, sub: fmtShort(x.d) + ' · ' + x.t + (x.n ? ' · Session ' + x.n : '') + (x.st ? ' · ' + MARK_LBL[x.st] : '') + (S.archived[ck] ? ' · archived' : '') });
+    });
+  });
+  S.plans.forEach(function (p) {
+    if (has([p.t, p.n || '', p.c && S.courses[p.c] ? co(p.c).name : '', fmtShort(p.d), p.d, p.k === 'task' ? 'assignment due' : 'event'].join(' ')))
+      out.push({ d: p.d, kind: p.k === 'task' ? 'Assignment' : 'My event', title: p.t, sub: fmtShort(p.d) + (p.ts ? ' · ' + fmt12(p.ts) : '') + (p.x ? ' · done' : '') + (p.rp ? ' · ' + repLabel(p) : '') });
+  });
+  var seenEv = {};
+  (R.evAll || []).forEach(function (e) {
+    seenEv[e.d] = true;
+    if (has([e.title, CAT_LABEL[e.k] || '', fmtShort(e.d), e.d].join(' '))) out.push({ d: e.d, kind: CAT_LABEL[e.k] || 'Calendar', title: e.title, sub: fmtShort(e.d) });
+  });
+  Object.keys(R.dayInfo).forEach(function (d) {
+    var i = R.dayInfo[d];
+    if (i && i.label && !seenEv[d] && has([i.label, fmtShort(d), d].join(' '))) out.push({ d: d, kind: 'Day', title: i.label, sub: fmtShort(d) });
+  });
+  out.sort(function (a, b) { var fa = a.d >= T, fb = b.d >= T; if (fa !== fb) return fa ? -1 : 1; return fa ? (a.d < b.d ? -1 : a.d > b.d ? 1 : 0) : (a.d < b.d ? 1 : a.d > b.d ? -1 : 0); });
+  return out;
+}
+function searchNodes(q) {
+  if (!String(q || '').trim()) return [h('p', { class: 'hint' }, 'Search classes by subject, code or faculty, your assignments and events, holidays, exams, or a date such as "12 oct".')];
+  var items = searchItems(q), shown = items.slice(0, 40);
+  if (!items.length) return [h('p', { class: 'empty-day' }, 'Nothing found.')];
+  var nodes = shown.map(function (it) {
+    return h('button', { type: 'button', class: 'sr-item', onclick: function () { S.modal = null; S.tab = 'tt'; saveUI(); goDay(it.d); window.scrollTo(0, 0); } },
+      h('span', { class: 'sk' }, it.kind), h('span', { class: 'st' }, it.title), h('span', { class: 'ss' }, it.sub));
+  });
+  if (items.length > shown.length) nodes.push(h('p', { class: 'hint' }, 'Showing the first ' + shown.length + ' of ' + items.length + '. Type more to narrow it down.'));
+  return nodes;
+}
+
 /* ----- report ----- */
-function buildReport(withList) {
-  var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+function buildReport(withList, withArch) {
+  var keys = Object.keys(R.byCourse).filter(function (ck) { return S.archived[ck] ? (withArch && !S.hidden[ck]) : tracked(ck); }).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
   var lab = { A: 'Attended', M: 'Missed', C: 'Condonation', X: 'Cancelled' };
   var courses = keys.map(function (ck) {
     var f = stats(ck), c = co(ck);
@@ -2073,7 +2298,7 @@ function deliver(name, mime, bytes, share) {
   } catch (e) { toast('Could not save the file.'); }
 }
 function saveReport(fmt, share) {
-  var M = S.modal, rep = buildReport(M.list !== false);
+  var M = S.modal, rep = buildReport(M.list !== false, !!M.arch);
   if (!rep.courses.length) { toast('No tracked courses to report.'); return; }
   var pdf = fmt === 'pdf';
   deliver('attendance-report-' + todayS() + (pdf ? '.pdf' : '.xlsx'), pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', pdf ? ttPdf(rep) : ttXlsx(rep), share);
@@ -2228,6 +2453,7 @@ function modal() {
       h('div', { class: 'row2' },
         h('div', { class: 'field' }, h('label', { for: 'r-n' }, 'Your name ', h('span', { class: 'opt' }, '(optional)')), h('input', { id: 'r-n', type: 'text', maxlength: '60', value: S.profile.name || '', 'data-fk': 'r-n', oninput: function (e) { S.profile.name = e.target.value; }, onchange: function () { save('pf'); } })),
         h('div', { class: 'field' }, h('label', { for: 'r-r' }, 'Reg. no ', h('span', { class: 'opt' }, '(optional)')), h('input', { id: 'r-r', type: 'text', maxlength: '30', value: S.profile.reg || '', 'data-fk': 'r-r', oninput: function (e) { S.profile.reg = e.target.value; }, onchange: function () { save('pf'); } }))),
+      Object.keys(S.archived).length ? h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'r-a', checked: M.arch ? true : null, onchange: function (e) { M.arch = e.target.checked; } }), 'Include archived courses') : null,
       h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'r-l', checked: M.list !== false ? true : null, onchange: function (e) { M.list = e.target.checked; } }), 'Include every class, date by date'),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn pri', 'data-fk': 'r-pdf', onclick: function () { saveReport('pdf', false); } }, ic('down'), 'PDF'),
@@ -2237,7 +2463,35 @@ function modal() {
       h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))
     ];
   };
+  var searchForm = function () {
+    var res = h('div', { class: 'sres', 'aria-live': 'polite' }, searchNodes(M.q));
+    return [
+      h('h2', { id: 'mt' }, 'Search'),
+      h('input', { id: 's-q', type: 'search', 'data-fk': 's-q', autocomplete: 'off', placeholder: 'Subject, faculty, assignment, event, date…', value: M.q || '', oninput: function (e) { M.q = e.target.value; res.replaceChildren.apply(res, searchNodes(M.q)); } }),
+      res,
+      h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))
+    ];
+  };
+  var archiveForm = function () {
+    var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+    var arch = Object.keys(S.archived).filter(function (k) { return S.courses[k]; }).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+    var picked = keys.filter(function (k) { return M.sel[k]; });
+    return [
+      h('h2', { id: 'mt' }, 'End of term'),
+      h('p', null, 'Archive the courses that are over. They leave Attendance, Forecast and the report. Their classes stay in the calendar and in your backup, and you can bring a course back at any time.'),
+      keys.length ? keys.map(function (ck) {
+        var f = stats(ck), last = lastClass(ck);
+        return h('label', { class: 'arow' }, h('input', { type: 'checkbox', 'data-fk': 'ar-' + ck, checked: M.sel[ck] ? true : null, onchange: function (e) { M.sel[ck] = e.target.checked; render(); } }),
+          h('span', null, h('span', { class: 't' }, co(ck).name + ' (' + co(ck).code + ')'), h('br'), h('span', { class: 's' }, f.held + ' of ' + f.term + ' sessions held' + (last ? ' · last class ' + fmtShort(last) : '') + (f.held ? ' · ' + fmtPct(f.pct) + '%' : ''))));
+      }) : h('p', null, 'No active courses.'),
+      arch.length ? [h('h3', null, 'Archived'), arch.map(function (k) { return h('div', { class: 'arow' }, h('span', { style: 'flex:1;min-width:0' }, h('span', { class: 't' }, co(k).name + ' (' + co(k).code + ')')), h('button', { type: 'button', class: 'btn sm', onclick: function () { unarchive(k); } }, 'Bring back')); })] : null,
+      h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'),
+        h('button', { type: 'button', class: 'btn pri', disabled: picked.length ? null : true, onclick: function () { archiveCourses(picked); } }, picked.length ? 'Archive ' + picked.length + (picked.length === 1 ? ' course' : ' courses') : 'Archive'))
+    ];
+  };
   if (M.stage === 'plan') body = planForm(M);
+  else if (M.stage === 'search') body = searchForm();
+  else if (M.stage === 'archive') body = archiveForm();
   else if (M.stage === 'move') body = mvForm();
   else if (M.stage === 'report') body = repForm();
   else if (M.stage === 'data') {
@@ -2250,15 +2504,31 @@ function modal() {
       h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn', onclick: function () { try { window.AndroidBridge.testNotification(); } catch (e) {} } }, 'Send a test notification')),
       h('hr', { class: 'sep' })
     ] : [h('p', { class: 'rem-note' }, 'Reminders and the home-screen widget are available in the Android app.')];
+    var seg3 = function (label, cur, opts, fn) {
+      return h('div', { class: 'field' }, h('span', { class: 'lbl2' }, label),
+        h('div', { class: 'vseg', role: 'group', 'aria-label': label }, opts.map(function (o) { return h('button', { type: 'button', 'aria-pressed': cur === o[0] ? 'true' : 'false', onclick: function () { fn(o[0]); } }, o[1]); })));
+    };
+    var nativeBk = !!(window.AndroidBridge && window.AndroidBridge.autoBackup);
     body = [
       h('h2', { id: 'mt' }, 'Settings'),
+      h('h3', null, 'Appearance'),
+      seg3('Theme', S.theme, [['system', 'Phone setting'], ['light', 'Light'], ['dark', 'Dark']], setTheme),
+      seg3('Text size', S.tsize, [[100, 'Normal'], [115, 'Large'], [130, 'Extra large']], setTsize),
+      h('hr', { class: 'sep' }),
       remBox,
       h('h3', null, 'Backup and restore'),
-      h('p', null, 'Everything in this app is saved only on this phone. If you clear the app\'s data, uninstall it or change phones, it is gone, so save a backup file now and then (and keep it somewhere safe, like Google Drive).'),
+      h('p', null, 'Everything in this app is saved only on this phone. If you clear the app\'s data, uninstall it or change phones, it is gone, so keep a backup file somewhere safe, like Google Drive.'),
+      nativeBk ? h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'auto-bk', checked: S.autoBk ? true : null, onchange: function (e) { S.autoBk = e.target.checked; saveUI(); autoDay = ''; render(); } }), 'Save a backup to Downloads every week') : null,
+      h('p', { class: 'rem-note' }, bkAgeText() + (nativeBk ? '. The last four automatic backups are kept in Downloads (class-planner-auto-…).' : '.')),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
-        h('button', { type: 'button', class: 'btn pri', onclick: function () { exportBackup(); } }, ic('down'), 'Save a backup file')),
+        h('button', { type: 'button', class: 'btn pri', onclick: function () { exportBackup(false); } }, ic('down'), 'Save a backup file now')),
       h('label', { class: 'drop', for: 'rs-file' }, ic('up'), 'Restore from a backup file', h('span', null, 'Replaces everything in the app with the backup'),
         h('input', { id: 'rs-file', type: 'file', class: 'sr', accept: '.json,application/json', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } })),
+      h('hr', { class: 'sep' }),
+      h('h3', null, 'Terms and imports'),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn', onclick: function () { openArchive(null); } }, 'End of term: archive finished courses'),
+        S.undo ? h('button', { type: 'button', class: 'btn', onclick: undoImport }, 'Undo last import (' + S.undo.kind + ', ' + new Date(S.undo.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ')') : null),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))];
   } else if (M.stage === 'restore') {
     body = [
@@ -2267,12 +2537,13 @@ function modal() {
       h('div', { class: 'warns' }, 'This replaces everything currently in the app: timetable, calendar, attendance and your plans.'),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'apply', onclick: applyRestore }, 'Restore'))];
   }
-  if (M.stage === 'plan' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report') {}
+  if (M.stage === 'plan' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report' || M.stage === 'search' || M.stage === 'archive') {}
   else if (M.stage === 'pick' || M.stage === 'error') {
     body = [
       h('h2', { id: 'mt' }, 'Import'),
       h('p', null, 'Choose the monthly timetable or the academic calendar (.xlsx). Dates covered by the file are replaced for everyone using this planner. Attendance marks stay for every class that is still on the timetable, and your own plans are never touched.'),
       M.stage === 'error' ? h('div', { class: 'err', role: 'alert' }, M.msg) : null,
+      S.undo ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn sm', onclick: undoImport }, 'Undo the last import (' + S.undo.kind + ', ' + new Date(S.undo.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ')')) : null,
       h('label', { class: 'drop', for: 'tt-file' }, ic('up'), 'Choose an .xlsx file', h('span', null, 'The file is read in your browser'),
         h('input', { id: 'tt-file', type: 'file', class: 'sr', accept: '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onFile(f); } })),
       h('details', null, h('summary', null, 'What the files should look like'),
@@ -2334,8 +2605,10 @@ function renderNow() {
     : 'Everything is saved only on this phone. Use Settings (top right) to save a backup copy of your data.');
   root.replaceChildren.apply(root, [header(), h('main', null, S.tab === 'tt' ? ttSection() : S.tab === 'fc' ? fcSection() : attSection()), S.tab === 'tt' ? foot : null, modal()].filter(Boolean));
   syncNative();
+  maybeAutoBackup();
   if (fk) { var el = root.querySelector('[data-fk="' + fk + '"]'); if (el && !el.disabled) el.focus({ preventScroll: true }); }
   else if (S.modal && (S.modal.stage === 'preview' || S.modal.stage === 'restore')) { var ap = root.querySelector('[data-fk="apply"]'); if (ap) ap.focus(); }
+  else if (S.modal && S.modal.stage === 'search' && !S.modal.focused) { S.modal.focused = true; var sq = root.querySelector('#s-q'); if (sq) sq.focus(); }
   else if (S.modal && S.modal.stage === 'plan' && !S.modal.focused) { S.modal.focused = true; var ft = root.querySelector('#f-t'); if (ft) ft.focus(); }
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
@@ -2344,6 +2617,7 @@ setInterval(function () { if (!document.hidden) takePending(); }, 4000);
 window.__back = function () { if (S.modal) { S.modal = null; render(); return true; } if (S.tab !== 'tt') { setTab('tt'); return true; } return false; };
 window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render };
 
+if (S.theme !== 'system' || S.tsize !== 100) applyLook();
 render();
 connect();
 })();

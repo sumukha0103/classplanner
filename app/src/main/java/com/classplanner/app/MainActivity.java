@@ -2,7 +2,9 @@ package com.classplanner.app;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -120,24 +122,54 @@ public class MainActivity extends Activity {
 
     /** Called from the page (window.AndroidBridge.saveBackup) to write a backup file into the Downloads folder. */
     private class Bridge {
+        private Uri writeDownload(String safe, String mime, byte[] data) throws Exception {
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.Downloads.DISPLAY_NAME, safe);
+            v.put(MediaStore.Downloads.MIME_TYPE, mime);
+            v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) throw new IllegalStateException("no uri");
+            try (OutputStream os = getContentResolver().openOutputStream(uri)) {
+                if (os == null) throw new IllegalStateException("no stream");
+                os.write(data);
+            }
+            return uri;
+        }
+
         @JavascriptInterface
         public void saveBackup(String name, String json) {
             try {
                 String safe = name == null ? "class-planner-backup.json" : name.replaceAll("[^A-Za-z0-9._-]", "_");
-                ContentValues v = new ContentValues();
-                v.put(MediaStore.Downloads.DISPLAY_NAME, safe);
-                v.put(MediaStore.Downloads.MIME_TYPE, "application/json");
-                v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
-                if (uri == null) throw new IllegalStateException("no uri");
-                try (OutputStream os = getContentResolver().openOutputStream(uri)) {
-                    if (os == null) throw new IllegalStateException("no stream");
-                    os.write(json.getBytes(StandardCharsets.UTF_8));
-                }
+                writeDownload(safe, "application/json", json.getBytes(StandardCharsets.UTF_8));
                 toast("Backup saved in your Downloads folder: " + safe);
             } catch (Exception e) {
                 toast("Could not save the backup.");
             }
+        }
+
+        /** Weekly automatic backup: same as saveBackup, then keep only the newest four automatic files. */
+        @JavascriptInterface
+        public void autoBackup(String name, String json) {
+            try {
+                String safe = name == null ? "class-planner-auto.json" : name.replaceAll("[^A-Za-z0-9._-]", "_");
+                writeDownload(safe, "application/json", json.getBytes(StandardCharsets.UTF_8));
+                toast("Weekly backup saved in your Downloads folder: " + safe);
+                try (Cursor c = getContentResolver().query(MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        new String[]{MediaStore.Downloads._ID}, MediaStore.Downloads.DISPLAY_NAME + " LIKE ?",
+                        new String[]{"class-planner-auto-%"}, MediaStore.Downloads.DATE_ADDED + " DESC, " + MediaStore.Downloads._ID + " DESC")) {
+                    int i = 0;
+                    while (c != null && c.moveToNext()) {
+                        if (++i > 4) getContentResolver().delete(ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, c.getLong(0)), null, null);
+                    }
+                }
+            } catch (Exception e) {
+                toast("Could not save the weekly backup.");
+            }
+        }
+
+        @JavascriptInterface
+        public void setTextZoom(final int percent) {
+            runOnUiThread(() -> web.getSettings().setTextZoom(Math.max(80, Math.min(200, percent))));
         }
 
         @JavascriptInterface
@@ -177,16 +209,7 @@ public class MainActivity extends Activity {
             try {
                 String safe = name == null ? "file" : name.replaceAll("[^A-Za-z0-9._-]", "_");
                 byte[] data = Base64.decode(base64, Base64.DEFAULT);
-                ContentValues v = new ContentValues();
-                v.put(MediaStore.Downloads.DISPLAY_NAME, safe);
-                v.put(MediaStore.Downloads.MIME_TYPE, mime);
-                v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
-                if (uri == null) throw new IllegalStateException("no uri");
-                try (OutputStream os = getContentResolver().openOutputStream(uri)) {
-                    if (os == null) throw new IllegalStateException("no stream");
-                    os.write(data);
-                }
+                Uri uri = writeDownload(safe, mime, data);
                 if (share) {
                     Intent send = new Intent(Intent.ACTION_SEND);
                     send.setType(mime);
