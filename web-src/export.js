@@ -209,7 +209,7 @@ function ttSheetXml(rows, widths) {
       if (c == null || c === '') return;
       const ref = ttColName(ci) + (ri + 1);
       let v = c, s = 0;
-      if (typeof c === 'object') { v = c.v; s = c.b ? 1 : c.f ? 2 : 0; }
+      if (typeof c === 'object') { v = c.v; s = c.b ? 1 : c.f ? 2 : c.w ? 3 : c.dt ? 4 : 0; }
       if (v == null || v === '') return;
       if (typeof v === 'number') x += '<c r="' + ref + '"' + (s ? ' s="' + s + '"' : '') + '><v>' + v + '</v></c>';
       else x += '<c r="' + ref + '" t="inlineStr"' + (s ? ' s="' + s + '"' : '') + '><is><t xml:space="preserve">' + ttXml(v) + '</t></is></c>';
@@ -231,14 +231,46 @@ function ttXlsx(rep) {
   const withList = rep.withList && ses.length > 1;
   const sheets = [['Summary', ttSheetXml(sum, [34, 12, 9, 15, 8, 10, 12, 8, 14, 10, 15, 16])]];
   if (withList) sheets.push(['Sessions', ttSheetXml(ses, [34, 12, 16, 16, 9, 14])]);
+  return ttZip(ttXlsxBook(sheets));
+}
+function ttXlsxBook(sheets) {
   const files = [];
   files.push({ name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + sheets.map(function (_, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' });
   files.push({ name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' });
   files.push({ name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map(function (s, i) { return '<sheet name="' + s[0] + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') + '</sheets></workbook>' });
   files.push({ name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map(function (_, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') + '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' });
-  files.push({ name: 'xl/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.0"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>' });
+  files.push({ name: 'xl/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.0"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf><xf numFmtId="15" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment vertical="top" horizontal="left"/></xf></cellXfs></styleSheet>' });
   sheets.forEach(function (s, i) { files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: s[1] }); });
+  return files;
+}
+
+/* ---------- sample files for the in-app guide ---------- */
+function ttSerial(iso) { const a = iso.split('-').map(Number); return Math.round((Date.UTC(a[0], a[1] - 1, a[2]) - Date.UTC(1899, 11, 30)) / 864e5); }
+function ttAddDays(iso, n) { const a = iso.split('-').map(Number), d = new Date(Date.UTC(a[0], a[1] - 1, a[2] + n)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+function ttSampleRows(kind, todayIso) {
+  const mon = ttAddDays(todayIso, -((new Date(todayIso + 'T00:00:00Z').getUTCDay() + 6) % 7));
+  const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const W = v => ({ v: v, w: true }), D = iso => ({ v: ttSerial(iso), dt: true });
+  if (kind === 'calendar') {
+    const rows = [[{ v: 'ACADEMIC CALENDAR (sample)', b: true }], [], [{ v: 'Date', b: true }, { v: 'Day', b: true }, { v: 'Category', b: true }, { v: 'Event / Notes', b: true }]];
+    const ev = [[1, 'Holiday/Festival', 'Example festival holiday'], [8, 'Exam', 'MID TERM EXAM (TERM 3)'], [15, 'Term Milestone', 'LAST DAY OF CLASSES (TERM 3)'], [16, 'Fest/Event', 'Example college fest'], [20, 'Other', 'Example notice: no classes']];
+    ev.forEach(e => { const d = ttAddDays(mon, e[0]); rows.push([D(d), DAYS[(new Date(d + 'T00:00:00Z').getUTCDay() + 6) % 7], e[1], e[2]]); });
+    return rows;
+  }
+  const cell = (name, code, fac, n, cr) => W(name + '\n' + code + '\n' + fac + '\nSession ' + n + ' | ' + cr + ' Credits');
+  const FM = n => cell('Financial Management', 'FIN 5001', 'Prof. A. Sharma', n, 3), MK = n => cell('Marketing Management', 'MKT 5002', 'Prof. B. Rao', n, 2), OB = n => cell('Organisational Behaviour', 'OBH 5003', 'Prof. C. Nair', n, 2);
+  const rows = [['T A PAI MANAGEMENT INSTITUTE, MANIPAL'], ['MBA (BATCH 2026 - 2028) \u2013 SECTION 4 (S4)'], ['TERM 3 TIME TABLE'], ['Venue: F4   |   SAMPLE: replace the example rows with your own timetable'], [],
+    [{ v: 'Date', b: true }, { v: 'Day', b: true }, { v: 'Day Type', b: true }, { v: '8:45 - 10:00', b: true }, { v: '10:15 - 11:30', b: true }, { v: '11:45 - 1:00', b: true }, { v: '2:30 - 3:45', b: true }, { v: '4:00 - 5:15', b: true }, { v: '5:45 - 7:00', b: true }]];
+  const plan = [
+    ['Instructional Day', FM(1), MK(1), null, OB(1), null, null], ['Instructional Day', null, FM(2), MK(2), null, OB(2), null], ['Instructional Day', MK(3), null, FM(3), null, null, null],
+    ['Instructional Day', OB(3), FM(4), null, MK(4), null, null], ['Instructional Day', FM(5), null, OB(4), null, MK(5), null], ['Holiday', 'Holiday \u2013 Example festival', null, null, null, null, null], ['Weekly Off', 'Weekly Off', null, null, null, null, null]];
+  plan.forEach((p, i) => { const d = ttAddDays(mon, i); rows.push([D(d), DAYS[i], p[0]].concat(p.slice(1))); });
+  return rows;
+}
+function ttSampleXlsx(kind, todayIso) {
+  const rows = ttSampleRows(kind, todayIso);
+  const files = ttXlsxBook([[kind === 'calendar' ? 'Calendar' : 'Timetable', ttSheetXml(rows, kind === 'calendar' ? [14, 12, 20, 40] : [13, 12, 18, 26, 26, 26, 26, 26, 26])]]);
   return ttZip(files);
 }
 
-if (typeof module !== 'undefined') module.exports = { ttPdf, ttXlsx, ttZip, ttCrc };
+if (typeof module !== 'undefined') module.exports = { ttPdf, ttXlsx, ttZip, ttCrc, ttSampleRows, ttSampleXlsx };

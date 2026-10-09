@@ -9,5 +9,6 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
         Scheduler.reschedule(c);
+        BackupAlarm.schedule(c, false);
     }
 }

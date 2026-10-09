@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 
 /** Shows the offline Class Planner page (assets/index.html) full screen. All data stays in the WebView's local storage. */
 public class MainActivity extends Activity {
-    private static final int REQ_FILE = 1;
+    private static final int REQ_FILE = 1, REQ_BACKUP = 2, REQ_SYNC = 3;
     private static final String HOME = "file:///android_asset/index.html";
 
     private WebView web;
@@ -94,8 +94,26 @@ public class MainActivity extends Activity {
             }
             return;
         }
+        if (requestCode == REQ_BACKUP || requestCode == REQ_SYNC) {
+            final String kind = requestCode == REQ_BACKUP ? "backup" : "sync";
+            final Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
+            if (uri == null) { js("window.__picked && window.__picked('" + kind + "', false)"); return; }
+            try {
+                int fl = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                getContentResolver().takePersistableUriPermission(uri, fl);
+            } catch (Exception ignored) { }
+            new Thread(() -> {
+                CloudStore.setTarget(getApplicationContext(), kind, uri, CloudStore.displayName(getApplicationContext(), uri));
+                js("window.__picked && window.__picked('" + kind + "', true)");
+            }).start();
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+    private void js(final String code) { runOnUiThread(() -> web.evaluateJavascript(code, null)); }
+
+    private void jsCb(String id, String res) { js("window.__cb(" + org.json.JSONObject.quote(id) + "," + org.json.JSONObject.quote(res) + ")"); }
 
     @Override
     @SuppressWarnings("deprecation")
@@ -224,6 +242,66 @@ public class MainActivity extends Activity {
                 toast("Could not save the file.");
             }
         }
+
+        /* ---- Google Drive backup and sync (files chosen in the system file screen) ---- */
+        @JavascriptInterface
+        public void pickTarget(final String kind, final String mode, final String name, final String mime) {
+            runOnUiThread(() -> {
+                try {
+                    boolean open = "open".equals(mode);
+                    Intent i = new Intent(open ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType(open ? "*/*" : (mime == null ? "application/octet-stream" : mime));
+                    if (!open) i.putExtra(Intent.EXTRA_TITLE, name == null ? "ClassPlanner" : name);
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    startActivityForResult(i, "backup".equals(kind) ? REQ_BACKUP : REQ_SYNC);
+                } catch (Exception e) {
+                    toast("Could not open the file screen.");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String targetInfo(String kind) { return CloudStore.info(getApplicationContext(), kind); }
+
+        @JavascriptInterface
+        public void clearTarget(String kind) { CloudStore.clearTarget(getApplicationContext(), kind); if ("backup".equals(kind)) BackupAlarm.cancel(getApplicationContext()); }
+
+        @JavascriptInterface
+        public void readTarget(final String kind, final String cb) {
+            new Thread(() -> {
+                String r;
+                try { r = Base64.encodeToString(CloudStore.read(getApplicationContext(), kind), Base64.NO_WRAP); }
+                catch (Exception e) { r = "ERR:" + CloudStore.explain(e); }
+                jsCb(cb, r);
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void writeTarget(final String kind, final String b64, final String cb) {
+            new Thread(() -> {
+                String r;
+                try { CloudStore.write(getApplicationContext(), kind, Base64.decode(b64, Base64.DEFAULT)); r = "ok"; }
+                catch (Exception e) { r = "ERR:" + CloudStore.explain(e); }
+                jsCb(cb, r);
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void stageBackup(String b64) {
+            try { CloudStore.stage(getApplicationContext(), Base64.decode(b64, Base64.DEFAULT)); } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface
+        public void backupNow(final String cb) {
+            new Thread(() -> jsCb(cb, CloudStore.backupNow(getApplicationContext()))).start();
+        }
+
+        @JavascriptInterface
+        public String backupStatus() { return CloudStore.status(getApplicationContext()); }
+
+        @JavascriptInterface
+        public void scheduleBackup(boolean on) { BackupAlarm.setEnabled(getApplicationContext(), on); }
 
         private void toast(final String msg) {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show());

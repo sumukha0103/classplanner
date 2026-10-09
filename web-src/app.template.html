@@ -358,6 +358,26 @@ textarea{resize:vertical;min-height:70px}
 #toast button{margin-left:14px;border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px 4px;min-height:28px}
 @media (min-width:760px){#toast{bottom:28px}}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
+
+.onb{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.onb h2{margin:0}
+.bar{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.oi{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.oi .dot{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font:600 13px var(--f-mono);color:var(--muted)}
+.oi.done .dot{background:var(--accent);border-color:var(--accent);color:var(--fill-ink)}
+.oi .tx{flex:1;min-width:0}.oi .tx b{display:block}.oi .tx span{display:block;font-size:13px;color:var(--muted)}
+.oi.lock{opacity:.55}
+.gtbl{border-collapse:collapse;font-size:12px;display:block;overflow-x:auto;max-width:100%}
+.gtbl th,.gtbl td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top;white-space:pre-line;min-width:76px}
+.gtbl th{background:var(--surface2)}
+.gl{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.gl b{color:var(--ink)}
+.crow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.crow .tx{flex:1 1 180px;min-width:0}.crow .tx b{display:block}.crow .tx span{font-size:12.5px;color:var(--muted)}
+.crow select{min-height:40px}
+.crow .tr{min-height:40px}
+.okrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600}
 </style>
 
 <div id="app" class="wrap"></div>
@@ -440,12 +460,25 @@ var S = {
   tab: 'tt', view: 'month', cur: '', sel: '', posSet: false, loaded: false, mode: 'pending', uid: null, canImport: false,
   courses: {}, info: null, months: {}, evs: {},            // shared: timetable + academic calendar
   marks: {}, hidden: {}, plans: [],                        // private to this account
-  totals: {}, archived: {}, undo: null, theme: 'system', tsize: 100, autoBk: true, lastBk: '', bkHide: '', profile: { name: '', reg: '' }, rem: { cls: false, due: false, at: '18:00' }, moves: {}, extra: [],
+  totals: {}, credOv: {}, archived: {}, undo: null, theme: 'system', tsize: 100, autoBk: true, lastBk: '', bkHide: '', profile: { name: '', reg: '' }, rem: { cls: false, due: false, at: '18:00' }, moves: {}, extra: [],
   hideK: {}, allTerms: false, showAllUp: false, showAllDue: false,
   showAllWk: false, modal: null, showAllQ: false, showAllSkip: false, qa: '', confirmAll: false, open: {}
 };
 var R = {};
 var db = null;
+/* device-only settings: checklist, Drive backup, sync, passphrase. Never part of a backup or of synced data. */
+S.onb = { hide: false, confirmed: false, guideSeen: false }; S.drive = { on: false, fmt: 'enc', at: '' }; S.sync = { on: false, rev: '', base: '', at: '' }; S.pass = '';
+var dataVer = 0, DEVKEY = 'cp-dev';
+function saveDev() { try { localStorage.setItem(DEVKEY, JSON.stringify({ onb: S.onb, drive: S.drive, sync: S.sync, pass: S.pass })); } catch (e) {} }
+(function loadDev() {
+  try {
+    var d = JSON.parse(localStorage.getItem(DEVKEY) || '{}');
+    if (d.onb) S.onb = Object.assign(S.onb, d.onb);
+    if (d.drive) S.drive = Object.assign(S.drive, d.drive);
+    if (d.sync) S.sync = Object.assign(S.sync, d.sync);
+    if (typeof d.pass === 'string') S.pass = d.pass;
+  } catch (e) {}
+})();
 var UIKEY = 'cp-ui', LOCKEY = 'cp-data';
 var narrow = !!(window.matchMedia && matchMedia('(max-width:719px)').matches);
 S.view = narrow ? 'day' : 'month';
@@ -485,7 +518,7 @@ function docData(k) {
   if (p[0] === 'tt') return clone(S.months[p[1]] || { sessions: [], days: {} });
   if (p[0] === 'ev') return { list: clone(S.evs[p[1]] || []) };
   if (p[0] === 'mk') return { m: clone(S.marks[p[1]] || {}) };
-  if (p[0] === 'pf') return { hidden: clone(S.hidden), archived: clone(S.archived), totals: clone(S.totals), profile: clone(S.profile), rem: clone(S.rem) };
+  if (p[0] === 'pf') return { hidden: clone(S.hidden), archived: clone(S.archived), credOv: clone(S.credOv), totals: clone(S.totals), profile: clone(S.profile), rem: clone(S.rem) };
   if (p[0] === 'aj') return { moves: clone(S.moves), extra: clone(S.extra) };
   return { list: clone(S.plans) };
 }
@@ -507,13 +540,13 @@ async function pump(k) {
   running[k] = false;
 }
 function saveLocal() {
-  try { localStorage.setItem(LOCKEY, JSON.stringify({ courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, archived: S.archived, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra })); } catch (e) {}
+  dataVer++;
+  try { localStorage.setItem(LOCKEY, JSON.stringify(dataObj())); } catch (e) {}
 }
 function loadLocal() {
   try {
     var d = JSON.parse(localStorage.getItem(LOCKEY) || 'null');
-    if (d) { S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {}; S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.archived = d.archived || {}; S.plans = d.plans || [];
-      S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || []; }
+    if (d) applyData(d, { noSave: true });
   } catch (e) {}
 }
 var flags = {};
@@ -524,7 +557,7 @@ async function connect() {
     if (window.claude && window.claude.use) { d = await window.claude.use('db'); u = await window.claude.use('user'); }
     if (d && u) uid = await u.id();
   } catch (e) { d = null; }
-  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); loadUndo(); S.loaded = true; render(); return; }
+  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); loadUndo(); S.loaded = true; if (!S.onb.guideSeen && !Object.keys(S.months).length) S.modal = { stage: 'guide', first: true }; render(); return; }
   db = d; S.uid = uid; S.mode = 'db';
   try { S.canImport = !!(await u.canEdit()); } catch (e) { S.canImport = false; }
   var err = function (e) { toast('Sync problem: ' + ((e && e.message) || 'unknown error')); };
@@ -545,11 +578,11 @@ async function connect() {
     ready('ev');
   }, err);
   db.collection('data/users/' + uid).onSnapshot(function (q) {
-    S.marks = {}; S.hidden = {}; S.archived = {}; S.plans = []; S.totals = {}; S.moves = {}; S.extra = [];
+    S.marks = {}; S.hidden = {}; S.archived = {}; S.credOv = {}; S.plans = []; S.totals = {}; S.moves = {}; S.extra = [];
     q.docs.forEach(function (x) {
       var v = x.data() || {};
       if (x.id.indexOf('marks-') === 0) S.marks[x.id.slice(6)] = clone(v.m || {});
-      else if (x.id === 'prefs') { S.hidden = clone(v.hidden || {}); S.archived = clone(v.archived || {}); S.totals = clone(v.totals || {}); S.profile = clone(v.profile || { name: '', reg: '' }); S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, v.rem || {}); }
+      else if (x.id === 'prefs') { S.hidden = clone(v.hidden || {}); S.archived = clone(v.archived || {}); S.credOv = clone(v.credOv || {}); S.totals = clone(v.totals || {}); S.profile = clone(v.profile || { name: '', reg: '' }); S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, v.rem || {}); }
       else if (x.id === 'adjust') { S.moves = clone(v.moves || {}); S.extra = clone(v.extra || []); }
       else if (x.id === 'plans') S.plans = clone(v.list || []);
     });
@@ -559,7 +592,7 @@ async function connect() {
 }
 
 /* ---------- derived data ---------- */
-function co(ck) { return S.courses[ck] || { code: ck, name: ck, faculty: '', credits: 1, col: 0 }; }
+function co(ck) { var c = S.courses[ck]; if (!c) return { code: ck, name: ck, faculty: '', credits: 1, col: 0 }; var o = S.credOv[ck]; return o ? Object.assign({}, c, { credits: o }) : c; }
 function cvar(ck) { return 'var(--c' + ((co(ck).col || 0) % 8) + ')'; }
 function tracked(ck) { return !S.hidden[ck] && !S.archived[ck]; }
 function termNum() { var m = /(\d+)/.exec((S.info && S.info.term) || ''); return m ? +m[1] : null; }
@@ -840,9 +873,18 @@ function toggleDone(id) {
 }
 
 /* backup + restore (phone-only storage) */
-function backupObj() {
-  return { app: 'class-planner', v: 1, saved: new Date().toISOString(),
-    data: { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, archived: S.archived, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra } };
+function dataObj() {
+  return { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, archived: S.archived, plans: S.plans, totals: S.totals, credOv: S.credOv, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra };
+}
+function backupObj() { return { app: 'class-planner', v: 1, saved: new Date().toISOString(), data: dataObj() }; }
+function syncData() { var d = clone(dataObj()); delete d.rem; return d; }
+function applyData(d, o) {
+  o = o || {};
+  S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {};
+  S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.archived = d.archived || {}; S.credOv = d.credOv || {}; S.plans = d.plans || [];
+  S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.moves = d.moves || {}; S.extra = d.extra || [];
+  if (!o.keepRem) S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {});
+  if (!o.noSave) { saveLocal(); if (!o.keepPos) { S.posSet = false; S.sel = ''; } }
 }
 function markBackedUp() { S.lastBk = todayS(); S.bkHide = ''; saveUI(); }
 function hasAnyData() { return Object.keys(S.months).length > 0 || S.plans.length > 0; }
@@ -874,7 +916,7 @@ function bkAgeText() {
 }
 function bkBanner() {
   var native = !!(window.AndroidBridge && window.AndroidBridge.autoBackup);
-  if (S.mode !== 'local' || !hasAnyData() || (native && S.autoBk) || S.bkHide === todayS()) return null;
+  if (S.mode !== 'local' || !hasAnyData() || (native && S.autoBk) || S.drive.on || S.bkHide === todayS()) return null;
   var d = S.lastBk ? daysBetween(S.lastBk, todayS()) : 999;
   if (d < 14) return null;
   return h('div', { class: 'banner', role: 'status' },
@@ -892,21 +934,31 @@ function applyLook() {
 }
 function setTheme(v) { S.theme = v; saveUI(); applyLook(); render(); }
 function setTsize(v) { S.tsize = v; saveUI(); applyLook(); render(); }
+function restoreFromObj(o) {
+  var d = o && o.app === 'class-planner' && o.data;
+  if (!d || typeof d.courses !== 'object' || typeof d.months !== 'object') throw new Error('x');
+  S.modal = { stage: 'restore', o: o, n: { classes: Object.keys(d.months).reduce(function (a, k) { return a + ((d.months[k].sessions || []).length); }, 0), plans: (d.plans || []).length, saved: o.saved } };
+}
 async function onRestoreFile(file) {
   try {
-    var o = JSON.parse(await file.text());
-    var d = o && o.app === 'class-planner' && o.data;
-    if (!d || typeof d.courses !== 'object' || typeof d.months !== 'object') throw new Error('x');
-    S.modal = { stage: 'restore', o: o, n: { classes: Object.keys(d.months).reduce(function (a, k) { return a + ((d.months[k].sessions || []).length); }, 0), plans: (d.plans || []).length, saved: o.saved } };
+    var u8 = new Uint8Array(await file.arrayBuffer());
+    if (ttIsEnc(u8)) { S.modal = { stage: 'unlock', bytes: u8, pass: S.pass || '', err: '' }; render(); return; }
+    restoreFromObj(JSON.parse(new TextDecoder().decode(u8)));
   } catch (e) { S.modal = { stage: 'error', msg: 'That file is not a Class Planner backup.' }; }
   render();
 }
+async function unlockRestore() {
+  var M = S.modal;
+  try {
+    var o = JSON.parse(new TextDecoder().decode(await ttDecrypt(M.bytes, M.pass)));
+    if (o && o.app === 'class-planner-sync') o = { app: 'class-planner', saved: o.at, data: o.data };
+    restoreFromObj(o);
+  } catch (e) { M.err = e.message === 'bad-pass' ? 'That passphrase does not open this file.' : 'That file is not a Class Planner backup.'; }
+  render();
+}
 function applyRestore() {
-  var d = S.modal.o.data;
-  S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {};
-  S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.archived = d.archived || {}; S.plans = d.plans || [];
-  S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || [];
-  saveLocal(); S.modal = null; S.posSet = false; S.sel = ''; render(); toast('Backup restored');
+  applyData(S.modal.o.data);
+  S.modal = null; render(); toast('Backup restored');
 }
 
 /* import */
@@ -1052,21 +1104,22 @@ function header() {
 
 function emptyState() {
   var local = S.mode === 'local';
-  return h('div', { class: 'card empty' },
-    h('h2', null, 'No timetable yet'),
-    S.canImport
-      ? [h('p', null, 'Welcome. Set up in two steps:'),
-         h('ol', { class: 'steps' },
-           h('li', null, h('b', null, 'Import your monthly timetable'), ' (.xlsx). Every class appears, ready to be marked Attended, Missed or Condonation.'),
-           h('li', null, h('b', null, 'Import the academic calendar'), ' (.xlsx, optional) for holidays, exams and the exam countdown.')),
-         h('div', { class: 'actions', style: 'justify-content:center' }, h('button', { type: 'button', class: 'btn pri', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import a file')),
-         local ? [
-           h('hr', { class: 'sep' }),
-           h('h3', null, 'New phone, or reinstalled the app?'),
-           h('p', null, 'Restore from the backup file you saved. It is a .json file in your Downloads folder, named class-planner-backup-… or class-planner-auto-…. Copy it to this phone first if it is on another device or in Google Drive.'),
-           h('label', { class: 'drop', for: 'rs-file0' }, ic('up'), 'Restore from a backup file', h('span', null, 'Brings back your timetable, attendance and plans'),
-             h('input', { id: 'rs-file0', type: 'file', class: 'sr', accept: '.json,application/json', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } }))] : null]
-      : h('p', null, 'The timetable has not been added yet. It will show up here once the owner imports it.'));
+  return h('div', null,
+    S.canImport ? onbCard() : null,
+    h('div', { class: 'card empty' },
+      h('h2', null, 'No timetable yet'),
+      S.canImport
+        ? [h('p', null, 'Import your monthly timetable (.xlsx) to start. Every class appears, ready to be marked Attended, Missed or Condonation.'),
+           h('div', { class: 'actions', style: 'justify-content:center' },
+             h('button', { type: 'button', class: 'btn pri', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import a file'),
+             h('button', { type: 'button', class: 'btn', onclick: function () { openGuide(false); } }, ic('doc'), 'How should the file look?')),
+           local ? [
+             h('hr', { class: 'sep' }),
+             h('h3', null, 'New phone, or reinstalled the app?'),
+             h('p', null, 'Restore from the backup file you saved: a class-planner-backup-… .json file, or ' + DRV_NAME + ' from your Google Drive.' + (nativeCloud() ? ' You can also set up Drive sync in the checklist above and join your existing sync file.' : '')),
+             h('label', { class: 'drop', for: 'rs-file0' }, ic('up'), 'Restore from a backup file', h('span', null, 'Brings back your timetable, attendance and plans'),
+               h('input', { id: 'rs-file0', type: 'file', class: 'sr', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } }))] : null]
+        : h('p', null, 'The timetable has not been added yet. It will show up here once the owner imports it.')));
 }
 
 /* ----- timetable ----- */
@@ -1342,7 +1395,7 @@ function weekCard() {
 }
 function ttSection() {
   if (!R.hasData) return emptyState();
-  return h('div', null, bkBanner(), countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
+  return h('div', null, onbCard(), bkBanner(), countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
 }
 
 /* ----- attendance ----- */
@@ -1653,6 +1706,400 @@ function setRem(k, v) {
   lastSync = ''; render();
 }
 
+/* ----- first-run checklist, file guide, confirm courses ----- */
+var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+function nativeCloud() { var B = window.AndroidBridge; return !!(B && B.pickTarget && B.readTarget && B.writeTarget); }
+function sampleFile(kind) {
+  try { deliver('sample-' + kind + '.xlsx', XLSX_MIME, ttSampleXlsx(kind, todayS()), false); }
+  catch (e) { toast('Could not create the sample file.'); }
+}
+function hasCal() { return Object.keys(S.evs).some(function (k) { return (S.evs[k] || []).length; }); }
+function openGuide(first) { S.modal = { stage: 'guide', first: !!first }; render(); }
+function closeGuide() { S.onb.guideSeen = true; saveDev(); S.modal = null; render(); }
+function onbSteps() {
+  var tt = Object.keys(S.months).length > 0, st = [];
+  if (S.canImport) st.push({ id: 'tt', done: tt, t: 'Import your timetable', d: 'The monthly .xlsx file from your programme office. Not sure how it should look? Open the file guide: it has a sample you can download.', b: 'Import', fn: function () { S.modal = { stage: 'pick' }; render(); } });
+  st.push({ id: 'cr', done: !!S.onb.confirmed, lock: !tt, t: 'Confirm courses and credits', d: 'Credits set how many sessions a course has (8 per credit), and so how many classes you can miss. Check them against your programme, and untick any course you do not want to track.', b: 'Check', fn: openCourses });
+  if (S.canImport) st.push({ id: 'cal', opt: true, done: hasCal(), t: 'Add the academic calendar', d: 'Optional. Brings holidays and exam dates, and the exam countdown.', b: 'Import', fn: function () { S.modal = { stage: 'pick' }; render(); } });
+  if (hasNative()) st.push({ id: 'rem', done: !!(S.rem.cls || S.rem.due), t: 'Turn on reminders', d: 'A notification after each class with Attended, Missed and Condonation buttons, so marking takes one tap.', b: 'Turn on', fn: function () { setRem('cls', true); } });
+  if (nativeCloud()) {
+    st.push({ id: 'bk', done: !!S.drive.on, t: 'Back up to Google Drive every day', d: 'Choose your Google account and folder once. A fresh encrypted copy is saved there each night.', b: 'Set up', fn: function () { openCloud(); } });
+    st.push({ id: 'sy', opt: true, done: !!S.sync.on, t: 'Keep two phones in sync', d: 'Optional. Share one encrypted file on Drive between your phones.', b: 'Set up', fn: function () { openCloud(); } });
+  }
+  return st;
+}
+function onbLeft() { return onbSteps().filter(function (s) { return !s.opt && !s.done; }); }
+function onbCard() {
+  if (S.onb.hide) return null;
+  var steps = onbSteps(), req = steps.filter(function (s) { return !s.opt; }), left = req.filter(function (s) { return !s.done; });
+  if (!left.length) return null;
+  var done = req.length - left.length;
+  var card = h('section', { class: 'card onb', 'aria-label': 'Set up your term' },
+    h('h2', null, 'Set up your term'),
+    h('p', { class: 'rem-note', style: 'margin:0' }, done + ' of ' + req.length + ' done'),
+    h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(req.length), 'aria-valuenow': String(done) }, h('i', { style: 'width:' + Math.round(100 * done / req.length) + '%' })));
+  steps.forEach(function (s, i) {
+    card.append(h('div', { class: 'oi' + (s.done ? ' done' : '') + (s.lock ? ' lock' : '') },
+      h('span', { class: 'dot', 'aria-hidden': 'true' }, s.done ? '✓' : String(i + 1)),
+      h('span', { class: 'tx' }, h('b', null, s.t + (s.opt ? ' (optional)' : '')), h('span', null, s.d)),
+      s.done ? h('span', { class: 'rem-note' }, 'Done') : h('button', { type: 'button', class: 'btn sm' + (s.lock ? '' : ' pri'), disabled: s.lock ? true : null, 'data-fk': 'onb-' + s.id, onclick: s.fn }, s.b)));
+  });
+  card.append(h('div', { class: 'actions', style: 'justify-content:flex-start' },
+    h('button', { type: 'button', class: 'btn sm', onclick: function () { openGuide(false); } }, ic('doc'), 'File guide'),
+    h('button', { type: 'button', class: 'btn sm', onclick: function () { S.onb.hide = true; saveDev(); render(); toast('Checklist hidden. You can bring it back in Settings.'); } }, 'Hide checklist')));
+  return card;
+}
+function gtable(head, rows) {
+  return h('table', { class: 'gtbl' }, h('thead', null, h('tr', null, head.map(function (x) { return h('th', null, x); }))),
+    h('tbody', null, rows.map(function (r) { return h('tr', null, r.map(function (x) { return h('td', null, x); })); })));
+}
+function guideForm(M) {
+  var cell = function (n, c, f, s, cr) { return n + '\n' + c + '\n' + f + '\nSession ' + s + '  |  ' + cr + ' Credits'; };
+  var T = todayS();
+  return [
+    h('h2', { id: 'mt' }, M.first ? 'Welcome to Class Planner' : 'File guide'),
+    h('p', null, 'Class Planner shows your timetable, lets you mark every class Attended, Missed or Condonation, and tells you how many classes you can still miss while staying above 85%. It works from the Excel files your programme office gives you.'),
+    h('h3', null, '1. The timetable file'),
+    h('p', null, 'One Excel file (.xlsx) per month, with the schedule on its first sheet. Import the next month later and it is added; only the dates the new file covers are replaced.'),
+    gtable(['Date', 'Day', 'Day Type', '8:45 - 10:00', '10:15 - 11:30', '11:45 - 1:00'], [
+      [fmtShort(T) + ' ' + T.slice(0, 4), 'Monday', 'Instructional Day', cell('Financial Management', 'FIN 5001', 'Prof. A. Sharma', 1, 3), cell('Marketing Management', 'MKT 5002', 'Prof. B. Rao', 1, 2), ''],
+      ['next row', 'Tuesday', 'Instructional Day', '', cell('Financial Management', 'FIN 5001', 'Prof. A. Sharma', 2, 3), ''],
+      ['next row', 'Saturday', 'Holiday', 'Holiday – Diwali', '', '']]),
+    h('ul', { class: 'gl' },
+      h('li', null, h('b', null, 'Header row: '), 'first cell says ', h('b', null, 'Date'), ', then Day, Day Type, then one column for each time slot, with the time in the heading (like 8:45 - 10:00).'),
+      h('li', null, h('b', null, 'One row per date, '), 'with no blank rows in between (reading stops at the first one). Dates can be real Excel dates or text like 05-Oct-2026 or 05/10/2026 (day first).'),
+      h('li', null, h('b', null, 'A class is four lines in one cell '), '(Alt+Enter for a new line): subject name, subject code, faculty, then ', h('b', null, 'Session 3 | 2 Credits'), '. The code is 2 to 5 capital letters then 3 or 4 digits, like FIN 5001.'),
+      h('li', null, h('b', null, 'Holidays and off days: '), 'type Holiday – Diwali or Weekly Off in a slot cell.'),
+      h('li', null, h('b', null, 'Optional title lines above the header '), 'such as "SECTION 4 (S4)", "TERM 3" and "Venue: F4" fill in the heading of the app.'),
+      h('li', null, 'Anything under the last date row (colour key, footnotes) is ignored.')),
+    h('h3', null, '2. The academic calendar (optional)'),
+    gtable(['Date', 'Day', 'Category', 'Event / Notes'], [
+      [fmtShort(addD(T, 6)) + ' ' + T.slice(0, 4), 'Thursday', 'Holiday/Festival', 'Diwali'],
+      ['next row', 'Tuesday', 'Exam', 'MID TERM EXAM (TERM 3)'],
+      ['next row', 'Friday', 'Term Milestone', 'LAST DAY OF CLASSES (TERM 3)']]),
+    h('p', { class: 'rem-note' }, 'Header row starts with Date and has a Category column. Categories: Holiday/Festival, Exam, Term Milestone, Fest/Event, Other. Writing MID TERM EXAM or END TERM EXAM with the term number switches on the exam countdown.'),
+    h('h3', null, 'Try it with a sample'),
+    h('p', null, 'These sample files follow the format exactly. Open them in Excel or Sheets to see the layout, replace the example rows with your own, and import.'),
+    h('div', { class: 'actions', style: 'justify-content:flex-start' },
+      h('button', { type: 'button', class: 'btn', onclick: function () { sampleFile('timetable'); } }, ic('down'), 'Sample timetable'),
+      h('button', { type: 'button', class: 'btn', onclick: function () { sampleFile('calendar'); } }, ic('down'), 'Sample calendar')),
+    S.mode === 'local' ? [
+      h('h3', null, '3. Your data'),
+      h('p', null, 'Everything is stored on this phone only. ' + (nativeCloud() ? 'To protect it, the checklist helps you set up an encrypted daily backup to your own Google Drive.' : 'Save a backup from Settings now and then.'))] : null,
+    h('div', { class: 'actions' },
+      S.canImport ? h('button', { type: 'button', class: 'btn', onclick: function () { S.onb.guideSeen = true; saveDev(); S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import my timetable') : null,
+      h('span', { class: 'spacer' }),
+      h('button', { type: 'button', class: 'btn pri', 'data-fk': 'guide-ok', onclick: closeGuide }, M.first ? 'Got it, let\'s start' : 'Close'))
+  ];
+}
+var CR_OPTS = [0.5, 1, 1.5, 2, 3, 4];
+function openCourses() {
+  var f = {};
+  Object.keys(S.courses).forEach(function (k) { f[k] = { cr: co(k).credits, on: !S.hidden[k] }; });
+  if (!Object.keys(f).length) { toast('Import a timetable first.'); return; }
+  S.modal = { stage: 'courses', f: f }; render();
+}
+function saveCourses() {
+  var M = S.modal;
+  Object.keys(M.f).forEach(function (k) {
+    var v = M.f[k], file = S.courses[k] ? S.courses[k].credits : null;
+    if (v.cr === file) delete S.credOv[k]; else S.credOv[k] = v.cr;
+    if (v.on) delete S.hidden[k]; else S.hidden[k] = true;
+  });
+  S.onb.confirmed = true; saveDev(); save('pf'); S.modal = null; render(); toast('Courses confirmed');
+}
+function coursesForm(M, close) {
+  var keys = Object.keys(M.f).sort(function (a, b) { return S.courses[a].name.localeCompare(S.courses[b].name); });
+  return [
+    h('h2', { id: 'mt' }, 'Confirm courses and credits'),
+    h('p', null, 'Read from your timetable. Credits set the number of sessions (8 per credit), and so how many classes you can miss. Fix anything that is wrong; your changes stay when you import a new month.'),
+    keys.map(function (k) {
+      var v = M.f[k], c = S.courses[k], opts = CR_OPTS.slice();
+      if (opts.indexOf(v.cr) < 0) { opts.push(v.cr); opts.sort(function (a, b) { return a - b; }); }
+      var n = Math.round(v.cr * PER_CREDIT);
+      return h('div', { class: 'crow' },
+        h('span', { class: 'tx' }, h('b', null, c.name), h('span', null, c.code + ' · ' + n + ' sessions' + (v.cr !== c.credits ? ' (file says ' + c.credits + ' credits)' : ''))),
+        h('select', { 'aria-label': 'Credits for ' + c.name, 'data-fk': 'cr-' + k, onchange: function (e) { v.cr = +e.target.value; render(); } },
+          opts.map(function (o) { return h('option', { value: String(o), selected: o === v.cr ? true : null }, o + (o === 1 ? ' credit' : ' credits')); })),
+        h('label', { class: 'tgrow tr' }, h('input', { type: 'checkbox', 'data-fk': 'on-' + k, checked: v.on ? true : null, onchange: function (e) { v.on = e.target.checked; } }), 'Track'));
+    }),
+    h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'cr-ok', onclick: saveCourses }, 'Looks right'))
+  ];
+}
+
+/* ----- Google Drive backup + encrypted sync (Android app; the file picker is the only door to Drive) ----- */
+var DRV_NAME = 'ClassPlanner-backup.cpbackup', SYNC_NAME = 'ClassPlanner-sync.cpsync';
+var cbs = {}, cbN = 0;
+function bridgeAsync(method) {
+  var B = window.AndroidBridge, args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (res, rej) {
+    var id = 'c' + (++cbN);
+    cbs[id] = res;
+    try { B[method].apply(B, args.concat([id])); } catch (e) { delete cbs[id]; rej(e); return; }
+    setTimeout(function () { if (cbs[id]) { delete cbs[id]; rej(new Error('The storage app did not answer in time.')); } }, 90000);
+  });
+}
+window.__cb = function (id, r) { var f = cbs[id]; if (f) { delete cbs[id]; f(r); } };
+function tgt(kind) { try { return JSON.parse(window.AndroidBridge.targetInfo(kind) || '{}'); } catch (e) { return {}; } }
+function whenText(v) {
+  if (!v) return '';
+  var d = new Date(v), day = iso(d), t = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  return (day === todayS() ? 'today' : day === addD(todayS(), -1) ? 'yesterday' : fmtShort(day)) + ' at ' + t;
+}
+function openCloud() { S.modal = { stage: 'cloud', p1: '', p2: '', err: '', editPass: false, show: false, confirmReplace: false }; render(); }
+function pickTarget(kind, mode) {
+  try { window.AndroidBridge.pickTarget(kind, mode, kind === 'backup' ? DRV_NAME : SYNC_NAME, 'application/octet-stream'); }
+  catch (e) { toast('Could not open the file picker.'); }
+}
+window.__picked = function (kind, ok) {
+  if (!ok) { toast('Nothing was chosen.'); render(); return; }
+  if (kind === 'backup') {
+    S.drive.on = true; saveDev(); stagedVer = -1;
+    try { window.AndroidBridge.scheduleBackup(true); } catch (e) {}
+    backupNow(true);
+  } else {
+    S.sync = { on: true, rev: '', base: '', at: '', err: '' }; saveDev(); syncedVer = -1;
+    syncNow(true);
+  }
+  render();
+};
+async function savePass() {
+  var M = S.modal; M.err = '';
+  if (!ttCanEncrypt()) M.err = 'Encryption is not available on this phone, so Drive backup and sync cannot be used.';
+  else if ((M.p1 || '').length < 8) M.err = 'Use at least 8 characters.';
+  else if (M.p1 !== M.p2) M.err = 'The two entries do not match.';
+  if (M.err) { render(); return; }
+  var changed = !!S.pass && S.pass !== M.p1;
+  S.pass = M.p1; M.p1 = M.p2 = ''; M.editPass = false; saveDev();
+  stagedVer = -1; if (S.sync.on) { S.sync.err = ''; syncedVer = -1; }
+  toast(changed ? 'Passphrase changed. Use the same one on your other phones.' : 'Passphrase saved');
+  if (S.drive.on) stageNow();
+  render();
+}
+var stageT = null, stagedVer = -1;
+function maybeStage() {
+  if (!nativeCloud() || !S.drive.on || !S.pass || S.mode !== 'local' || !S.loaded || !hasAnyData() || stagedVer === dataVer) return;
+  clearTimeout(stageT); stageT = setTimeout(stageNow, 3000);
+}
+async function stageNow() {
+  if (!S.pass || !hasAnyData()) return false;
+  var ver = dataVer;
+  try {
+    var enc = await ttEncrypt(new TextEncoder().encode(JSON.stringify(backupObj())), S.pass);
+    window.AndroidBridge.stageBackup(ttB64(enc));
+    stagedVer = ver; return true;
+  } catch (e) { return false; }
+}
+async function backupNow(first) {
+  if (!hasAnyData()) { toast(first ? 'Location saved. Your first backup will happen once you have a timetable.' : 'Nothing to back up yet.'); render(); return; }
+  S.drive.busy = true; render();
+  var msg = '';
+  try {
+    if (!(await stageNow())) throw new Error('Could not prepare the backup.');
+    var r = await bridgeAsync('backupNow');
+    if (r !== 'ok') throw new Error(String(r).replace(/^ERR:/, ''));
+    S.drive.at = new Date().toISOString(); S.drive.err = ''; msg = 'Backed up to your Drive';
+  } catch (e) { S.drive.err = (e && e.message) || 'Failed'; msg = 'Backup failed: ' + S.drive.err; }
+  S.drive.busy = false; saveDev(); toast(msg); render();
+}
+function stopDrive() {
+  try { window.AndroidBridge.scheduleBackup(false); window.AndroidBridge.clearTarget('backup'); } catch (e) {}
+  S.drive = { on: false, at: '', err: '' }; saveDev(); render(); toast('Daily backup is off');
+}
+function driveState() {      // merge in what the nightly job did while the app was closed
+  if (!S.drive.on) return null;
+  var st = {}; try { st = JSON.parse(window.AndroidBridge.backupStatus() || '{}'); } catch (e) {}
+  return st;
+}
+/* sync */
+var syncing = false, syncedVer = -1, syncT2 = null, SNAPKEY = 'cp-syncundo';
+function newRev() { return ttB64(crypto.getRandomValues(new Uint8Array(9))); }
+function maybeSync() {
+  if (!nativeCloud() || !S.sync.on || !S.pass || !S.loaded || S.mode !== 'local' || syncing || syncedVer === dataVer) return;
+  clearTimeout(syncT2); syncT2 = setTimeout(function () { syncNow(false); }, syncedVer === -1 ? 1500 : 20000);
+}
+function syncFail(msg) { S.sync.err = msg; saveDev(); }
+function syncErrText(e) {
+  var m = e && e.message;
+  if (m === 'wrong-pass') return 'wrong-pass';
+  if (m === 'not-ours') return 'That file is not a Class Planner sync file.';
+  return m || 'Sync failed';
+}
+async function readRemote() {
+  var raw = await bridgeAsync('readTarget', 'sync');
+  if (String(raw).indexOf('ERR:') === 0) throw new Error(String(raw).slice(4));
+  if (!raw) return null;
+  var plain;
+  try { plain = await ttDecrypt(ttFromB64(raw), S.pass); }
+  catch (e) { throw new Error(e.message === 'not-encrypted' ? 'not-ours' : e.message === 'bad-pass' ? 'wrong-pass' : e.message); }
+  var o = JSON.parse(new TextDecoder().decode(plain));
+  if (!o || o.app !== 'class-planner-sync' || !o.data) throw new Error('not-ours');
+  return o;
+}
+async function pushData(local, lh) {
+  var rev = newRev(), obj = { app: 'class-planner-sync', v: 1, rev: rev, at: new Date().toISOString(), data: local };
+  var enc = await ttEncrypt(new TextEncoder().encode(JSON.stringify(obj)), S.pass);
+  var r = await bridgeAsync('writeTarget', 'sync', ttB64(enc));
+  if (r !== 'ok') throw new Error(String(r).replace(/^ERR:/, ''));
+  S.sync.rev = rev; S.sync.base = lh;
+  try { var back = await readRemote(); if (!back || back.rev !== rev) S.sync.base = ''; } catch (e) { S.sync.base = ''; }   // someone else wrote at the same time (or Drive is slow): look again next time
+}
+function snapForUndo() { try { localStorage.setItem(SNAPKEY, JSON.stringify({ at: Date.now(), data: dataObj() })); } catch (e) {} }
+function hasSyncUndo() { try { return !!localStorage.getItem(SNAPKEY); } catch (e) { return false; } }
+function undoSync() {
+  try {
+    var s = JSON.parse(localStorage.getItem(SNAPKEY) || 'null'); if (!s) return;
+    applyData(s.data, { keepRem: true, keepPos: true }); localStorage.removeItem(SNAPKEY);
+    syncedVer = -1; S.modal = null; render(); toast('This phone is back to before the last sync. Your other phone gets this version at the next sync.');
+  } catch (e) { toast('Nothing to undo.'); }
+}
+function pullData(remote) {
+  snapForUndo();
+  applyData(remote.data, { keepRem: true, keepPos: true });
+  S.sync.rev = remote.rev; S.sync.base = ttHash(ttStable(syncData()));
+}
+async function syncNow(manual) {
+  if (syncing || !nativeCloud() || !S.sync.on) return;
+  if (!S.pass) { syncFail('Set a passphrase first.'); render(); return; }
+  syncing = true; S.sync.busy = true; if (S.modal && S.modal.stage === 'cloud') render();
+  var ver = dataVer, note = '';
+  try {
+    var local = syncData(), lh = ttHash(ttStable(local)), remote = await readRemote(), changed = lh !== S.sync.base;
+    if (dataVer !== ver) { syncedVer = -2; note = 'again'; }
+    else if (!remote) { await pushData(local, lh); note = 'pushed'; }
+    else if (remote.rev === S.sync.rev) { if (changed) { await pushData(local, lh); note = 'pushed'; } else note = 'same'; }
+    else if (!hasAnyData() || !changed) { pullData(remote); note = 'pulled'; }
+    else { S.modal = { stage: 'conflict', remote: remote, local: local, lh: lh }; note = 'conflict'; }
+    if (note !== 'again' && note !== 'conflict') { S.sync.at = new Date().toISOString(); S.sync.err = ''; syncedVer = ver; if (note === 'pulled') syncedVer = dataVer; }
+    if (note === 'conflict') syncedVer = ver;
+    saveDev();
+    if (manual) toast(note === 'pushed' ? 'Sent this phone\'s changes' : note === 'pulled' ? 'Updated from your other phone' : note === 'conflict' ? 'Both phones changed. Choose what to keep.' : 'Already up to date');
+  } catch (e) { syncedVer = dataVer; S.sync.err = syncErrText(e); saveDev(); if (manual && S.sync.err !== 'wrong-pass') toast('Sync failed: ' + S.sync.err); }
+  syncing = false; S.sync.busy = false; render();
+}
+async function resolveConflict(choice) {
+  var M = S.modal; if (!M || M.stage !== 'conflict') return;
+  S.modal = null; syncing = true; S.sync.busy = true; render();
+  try {
+    if (choice === 'theirs') { pullData(M.remote); }
+    else {
+      var data = M.local;
+      if (choice === 'both') { snapForUndo(); var merged = ttMerge(M.local, M.remote.data); applyData(merged, { keepRem: true, keepPos: true }); data = syncData(); }
+      await pushData(data, ttHash(ttStable(data)));
+    }
+    S.sync.at = new Date().toISOString(); S.sync.err = ''; syncedVer = dataVer; saveDev();
+    toast(choice === 'theirs' ? 'Using the other phone\'s data' : choice === 'both' ? 'Combined both phones' : 'Kept this phone\'s data and shared it');
+  } catch (e) { syncedVer = dataVer; S.sync.err = syncErrText(e); saveDev(); toast('Sync failed: ' + S.sync.err); }
+  syncing = false; S.sync.busy = false; render();
+}
+async function replaceRemote() {          // forgot / changed passphrase: overwrite the shared file with this phone's data
+  var M = S.modal; if (M) M.confirmReplace = false;
+  syncing = true; S.sync.busy = true; render();
+  try { var d = syncData(); await pushData(d, ttHash(ttStable(d))); S.sync.at = new Date().toISOString(); S.sync.err = ''; syncedVer = dataVer; saveDev(); toast('Sync file replaced'); }
+  catch (e) { S.sync.err = syncErrText(e); saveDev(); toast('Failed: ' + S.sync.err); }
+  syncing = false; S.sync.busy = false; render();
+}
+function stopSync() {
+  try { window.AndroidBridge.clearTarget('sync'); } catch (e) {}
+  S.sync = { on: false, rev: '', base: '', at: '', err: '' }; saveDev(); render(); toast('Sync is off. Your data on this phone is unchanged.');
+}
+function cloudForm(M, close) {
+  var cloud = nativeCloud(), hasPass = !!S.pass, out = [h('h2', { id: 'mt' }, 'Backup and sync')];
+  var ppf = function (idn, label, key) {
+    return h('div', { class: 'field' }, h('label', { for: idn }, label),
+      h('input', { id: idn, type: M.show ? 'text' : 'password', value: M[key] || '', autocomplete: 'new-password', 'data-fk': idn, oninput: function (e) { M[key] = e.target.value; } }));
+  };
+  out.push(h('p', null, 'Your Drive files are encrypted on this phone before they leave it, so Google and anyone else who sees the files cannot read them. The passphrase is the key.'));
+  if (!hasPass || M.editPass) {
+    out.push(h('h3', null, hasPass ? 'Change passphrase' : '1. Choose a passphrase'),
+      ppf('pp1', 'Passphrase (8 or more characters)', 'p1'), ppf('pp2', 'Type it again', 'p2'),
+      h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'pp-show', checked: M.show ? true : null, onchange: function (e) { M.show = e.target.checked; render(); } }), 'Show what I type'),
+      h('div', { class: 'warns' }, 'Write it down somewhere safe. It cannot be recovered: if you lose it, your Drive backup and sync file can never be opened. It is also needed on every phone you sync. It is kept on this phone only.'),
+      M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', 'data-fk': 'pp-save', onclick: savePass }, 'Save passphrase'),
+        hasPass ? h('button', { type: 'button', class: 'btn', onclick: function () { M.editPass = false; M.err = ''; render(); } }, 'Cancel') : null));
+  } else {
+    out.push(h('h3', null, '1. Passphrase'), h('div', { class: 'okrow' }, h('span', null, '✓ Passphrase is set on this phone'), h('button', { type: 'button', class: 'btn sm', onclick: function () { M.editPass = true; render(); } }, 'Change')));
+  }
+  out.push(h('hr', { class: 'sep' }), h('h3', null, '2. Daily backup to Google Drive'));
+  if (!cloud) out.push(h('p', null, 'Daily backup is available in the Android app.'));
+  else if (!hasPass) out.push(h('p', { class: 'rem-note' }, 'Set a passphrase first.'));
+  else if (!S.drive.on) {
+    out.push(h('p', null, 'Every night about 10 pm, the app saves one encrypted file (' + DRV_NAME + ') to Drive, replacing the previous night\'s. It contains your whole timetable, attendance, plans and settings.'),
+      h('ol', { class: 'steps' },
+        h('li', null, 'Tap the button below. Your phone\'s file screen opens.'),
+        h('li', null, 'Open the menu (☰) and choose ', h('b', null, 'Drive'), '. Pick the ', h('b', null, 'Google account'), ' you want to use, then a folder.'),
+        h('li', null, 'Tap ', h('b', null, 'Save'), '.')),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn pri', 'data-fk': 'drv-pick', onclick: function () { pickTarget('backup', 'create'); } }, 'Choose Google account and folder')));
+  } else {
+    var ti = tgt('backup'), st = driveState() || {}, at = st.at ? new Date(st.at).toISOString() : S.drive.at, err = st.ok === true ? '' : st.ok === false ? st.err : S.drive.err;
+    out.push(h('div', { class: 'okrow' }, h('span', null, '✓ Daily backup is on')),
+      h('p', { class: 'rem-note', style: 'margin:0' }, (ti.name || DRV_NAME) + ' · ' + (ti.drive ? 'Google Drive' : ti.set ? 'Not Google Drive (' + (ti.auth || 'other storage') + ')' : 'Location lost: choose it again')),
+      !ti.drive && ti.set ? h('div', { class: 'warns' }, 'This is not in Google Drive. Choose again and pick Drive from the menu.') : null,
+      at ? h('p', { class: 'rem-note', style: 'margin:0' }, 'Last backup ' + whenText(at)) : h('p', { class: 'rem-note', style: 'margin:0' }, 'No backup has run yet.'),
+      err ? h('div', { class: 'warns' }, 'Last attempt failed: ' + err + '. It will try again tomorrow night, or tap Back up now.') : null,
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', disabled: S.drive.busy ? true : null, 'data-fk': 'drv-now', onclick: function () { backupNow(false); } }, S.drive.busy ? 'Backing up…' : 'Back up now'),
+        h('button', { type: 'button', class: 'btn', onclick: function () { pickTarget('backup', 'create'); } }, 'Change account or folder'),
+        h('button', { type: 'button', class: 'btn', onclick: stopDrive }, 'Turn off')),
+      h('p', { class: 'rem-note' }, 'To restore on a new phone, install the app, then use "Restore from a backup file" and pick this file from Drive.'));
+  }
+  out.push(h('hr', { class: 'sep' }), h('h3', null, '3. Sync between phones (optional)'));
+  if (!cloud) out.push(h('p', null, 'Sync is available in the Android app.'));
+  else if (!hasPass) out.push(h('p', { class: 'rem-note' }, 'Set a passphrase first.'));
+  else if (!S.sync.on) {
+    out.push(h('p', null, 'Keep two phones showing the same timetable, attendance and plans through one encrypted file on Drive.'),
+      h('p', { class: 'rem-note' }, 'First phone: create the sync file. Other phone: set the same passphrase, then join and pick that same file. Both phones need to see the file in Drive (same Google account, or share the file with the other account and give it edit access).'),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', 'data-fk': 'sy-new', onclick: function () { pickTarget('sync', 'create'); } }, 'Create the sync file'),
+        h('button', { type: 'button', class: 'btn', 'data-fk': 'sy-join', onclick: function () { pickTarget('sync', 'open'); } }, 'Join an existing sync file')));
+  } else {
+    var si = tgt('sync'), e = S.sync.err;
+    out.push(h('div', { class: 'okrow' }, h('span', null, '✓ Sync is on')),
+      h('p', { class: 'rem-note', style: 'margin:0' }, (si.name || SYNC_NAME) + ' · ' + (si.drive ? 'Google Drive' : si.set ? 'Not Google Drive' : 'Location lost')),
+      S.sync.at ? h('p', { class: 'rem-note', style: 'margin:0' }, 'Last synced ' + whenText(S.sync.at)) : null,
+      e === 'wrong-pass' ? h('div', { class: 'warns' }, 'This passphrase does not open the sync file. If you changed it on your other phone, use that one here (Change). If the old one is lost, you can replace the file with this phone\'s data.') : e ? h('div', { class: 'warns' }, e) : null,
+      e === 'wrong-pass' ? (M.confirmReplace
+        ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn danger', onclick: replaceRemote }, 'Yes, replace the sync file'), h('button', { type: 'button', class: 'btn', onclick: function () { M.confirmReplace = false; render(); } }, 'Cancel'))
+        : h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn', onclick: function () { M.confirmReplace = true; render(); } }, 'Replace the sync file with this phone\'s data'))) : null,
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', disabled: S.sync.busy ? true : null, 'data-fk': 'sy-now', onclick: function () { syncNow(true); } }, S.sync.busy ? 'Syncing…' : 'Sync now'),
+        hasSyncUndo() ? h('button', { type: 'button', class: 'btn', onclick: undoSync }, 'Undo last sync') : null,
+        h('button', { type: 'button', class: 'btn', onclick: stopSync }, 'Turn off')),
+      h('p', { class: 'rem-note' }, 'Syncs when you open the app and shortly after you change something. Reminders stay per phone.'));
+  }
+  out.push(h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Close')));
+  return out;
+}
+function conflictForm(M) {
+  var n = function (d) { return Object.keys(d.months || {}).reduce(function (a, k) { return a + ((d.months[k].sessions || []).length); }, 0); };
+  return [
+    h('h2', { id: 'mt' }, 'Both phones changed'),
+    h('p', null, 'This phone and the shared file each have changes the other does not. Choose what to keep.'),
+    h('div', { class: 'kv' },
+      h('div', null, h('b', null, n(M.local)), h('span', null, 'classes on this phone')),
+      h('div', null, h('b', null, n(M.remote.data)), h('span', null, 'classes in the file' + (M.remote.at ? ' (' + whenText(M.remote.at) + ')' : '')))),
+    h('div', { class: 'actions', style: 'flex-direction:column;align-items:stretch' },
+      h('button', { type: 'button', class: 'btn pri', 'data-fk': 'cf-both', onclick: function () { resolveConflict('both'); } }, 'Combine both (recommended)'),
+      h('p', { class: 'rem-note', style: 'margin:0' }, 'Keeps every mark, plan and class from both. If the same class is marked differently, this phone wins.'),
+      h('button', { type: 'button', class: 'btn', onclick: function () { resolveConflict('mine'); } }, 'Keep this phone\'s data'),
+      h('p', { class: 'rem-note', style: 'margin:0' }, 'The shared file (and your other phone) takes this phone\'s data.'),
+      h('button', { type: 'button', class: 'btn', onclick: function () { resolveConflict('theirs'); } }, 'Use the other phone\'s data'),
+      h('p', { class: 'rem-note', style: 'margin:0' }, 'This phone is replaced. You can undo it in Backup and sync.')),
+    h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: function () { S.modal = null; render(); } }, 'Decide later'))
+  ];
+}
+function unlockForm(M, close) {
+  return [
+    h('h2', { id: 'mt' }, 'This backup is encrypted'),
+    h('p', null, 'Type the passphrase you chose when you set up Drive backup.'),
+    h('div', { class: 'field' }, h('label', { for: 'ul-p' }, 'Passphrase'), h('input', { id: 'ul-p', type: 'password', value: M.pass || '', autocomplete: 'off', 'data-fk': 'ul-p', oninput: function (e) { M.pass = e.target.value; }, onkeydown: function (e) { if (e.key === 'Enter') unlockRestore(); } })),
+    M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
+    h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', onclick: unlockRestore }, 'Open'))
+  ];
+}
+
 /* ----- modal ----- */
 function planForm(M) {
   var f = M.f, isTask = f.k === 'task';
@@ -1788,6 +2235,11 @@ function modal() {
   else if (M.stage === 'archive') body = archiveForm();
   else if (M.stage === 'move') body = mvForm();
   else if (M.stage === 'report') body = repForm();
+  else if (M.stage === 'guide') body = guideForm(M);
+  else if (M.stage === 'courses') body = coursesForm(M, close);
+  else if (M.stage === 'cloud') body = cloudForm(M, close);
+  else if (M.stage === 'conflict') body = conflictForm(M);
+  else if (M.stage === 'unlock') body = unlockForm(M, close);
   else if (M.stage === 'data') {
     var remBox = hasNative() ? [
       h('h3', null, 'Reminders'),
@@ -1810,6 +2262,10 @@ function modal() {
       seg3('Text size', S.tsize, [[100, 'Normal'], [115, 'Large'], [130, 'Extra large']], setTsize),
       h('hr', { class: 'sep' }),
       remBox,
+      nativeCloud() || true ? [h('h3', null, 'Google Drive backup and sync'),
+        h('p', null, nativeCloud() ? (S.drive.on ? 'Daily backup to Drive is on' + (S.sync.on ? ', and sync is on.' : '.') : 'Set up an encrypted daily backup to your Google Drive, and optionally sync two phones.') : 'Daily Drive backup and sync are available in the Android app.'),
+        nativeCloud() ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn pri', 'data-fk': 'open-cloud', onclick: openCloud }, S.drive.on || S.sync.on ? 'Manage backup and sync' : 'Set up')) : null,
+        h('hr', { class: 'sep' })] : null,
       h('h3', null, 'Backup and restore'),
       h('p', null, 'Everything in this app is saved only on this phone. If you clear the app\'s data, uninstall it or change phones, it is gone, so keep a backup file somewhere safe, like Google Drive.'),
       nativeBk ? h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'auto-bk', checked: S.autoBk ? true : null, onchange: function (e) { S.autoBk = e.target.checked; saveUI(); autoDay = ''; render(); } }), 'Save a backup to Downloads every week') : null,
@@ -1817,9 +2273,13 @@ function modal() {
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn pri', onclick: function () { exportBackup(false); } }, ic('down'), 'Save a backup file now')),
       h('label', { class: 'drop', for: 'rs-file' }, ic('up'), 'Restore from a backup file', h('span', null, 'Replaces everything in the app with the backup'),
-        h('input', { id: 'rs-file', type: 'file', class: 'sr', accept: '.json,application/json', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } })),
+        h('input', { id: 'rs-file', type: 'file', class: 'sr', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onRestoreFile(f); } })),
       h('hr', { class: 'sep' }),
       h('h3', null, 'Terms and imports'),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn', onclick: function () { openGuide(false); } }, ic('doc'), 'File guide and samples'),
+        h('button', { type: 'button', class: 'btn', onclick: openCourses }, 'Courses and credits'),
+        S.onb.hide ? h('button', { type: 'button', class: 'btn', onclick: function () { S.onb.hide = false; saveDev(); S.modal = null; setTab('tt'); } }, 'Show the setup checklist') : null),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn', onclick: function () { openArchive(null); } }, 'End of term: archive finished courses'),
         S.undo ? h('button', { type: 'button', class: 'btn', onclick: undoImport }, 'Undo last import (' + S.undo.kind + ', ' + new Date(S.undo.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ')') : null),
@@ -1831,7 +2291,7 @@ function modal() {
       h('div', { class: 'warns' }, 'This replaces everything currently in the app: timetable, calendar, attendance and your plans.'),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'apply', onclick: applyRestore }, 'Restore'))];
   }
-  if (M.stage === 'plan' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report' || M.stage === 'search' || M.stage === 'archive') {}
+  if (M.stage === 'plan' || M.stage === 'guide' || M.stage === 'courses' || M.stage === 'cloud' || M.stage === 'conflict' || M.stage === 'unlock' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report' || M.stage === 'search' || M.stage === 'archive') {}
   else if (M.stage === 'pick' || M.stage === 'error') {
     body = [
       h('h2', { id: 'mt' }, 'Import'),
@@ -1840,6 +2300,7 @@ function modal() {
       S.undo ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn sm', onclick: undoImport }, 'Undo the last import (' + S.undo.kind + ', ' + new Date(S.undo.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ')')) : null,
       h('label', { class: 'drop', for: 'tt-file' }, ic('up'), 'Choose an .xlsx file', h('span', null, 'The file is read in your browser'),
         h('input', { id: 'tt-file', type: 'file', class: 'sr', accept: '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', onchange: function (e) { var f = e.target.files && e.target.files[0]; if (f) onFile(f); } })),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn sm', onclick: function () { openGuide(false); } }, ic('doc'), 'Full file guide and sample downloads')),
       h('details', null, h('summary', null, 'What the files should look like'),
         h('ul', null,
           h('li', null, 'Timetable: a header row with Date, Day, Day Type, then one column per time slot such as 8:45 - 10:00. One row per date. A class cell has four lines: subject name, subject code, faculty, then Session 3 | 2 Credits.'),
@@ -1900,16 +2361,18 @@ function renderNow() {
   root.replaceChildren.apply(root, [header(), h('main', null, S.tab === 'tt' ? ttSection() : S.tab === 'fc' ? fcSection() : attSection()), S.tab === 'tt' ? foot : null, modal()].filter(Boolean));
   syncNative();
   maybeAutoBackup();
+  maybeStage();
+  maybeSync();
   if (fk) { var el = root.querySelector('[data-fk="' + fk + '"]'); if (el && !el.disabled) el.focus({ preventScroll: true }); }
   else if (S.modal && (S.modal.stage === 'preview' || S.modal.stage === 'restore')) { var ap = root.querySelector('[data-fk="apply"]'); if (ap) ap.focus(); }
   else if (S.modal && S.modal.stage === 'search' && !S.modal.focused) { S.modal.focused = true; var sq = root.querySelector('#s-q'); if (sq) sq.focus(); }
   else if (S.modal && S.modal.stage === 'plan' && !S.modal.focused) { S.modal.focused = true; var ft = root.querySelector('#f-t'); if (ft) ft.focus(); }
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
-document.addEventListener('visibilitychange', function () { if (!document.hidden && S.loaded) { takePending(); render(); } });
+document.addEventListener('visibilitychange', function () { if (!document.hidden && S.loaded) { takePending(); if (S.sync.on) syncedVer = -1; render(); } });
 setInterval(function () { if (!document.hidden) takePending(); }, 4000);
 window.__back = function () { if (S.modal) { S.modal = null; render(); return true; } if (S.tab !== 'tt') { setTab('tt'); return true; } return false; };
-window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render };
+window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render, enc: { ttDecrypt: ttDecrypt, ttFromB64: ttFromB64, ttIsEnc: ttIsEnc } };
 
 if (S.theme !== 'system' || S.tsize !== 100) applyLook();
 render();
