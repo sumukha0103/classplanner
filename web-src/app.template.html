@@ -52,7 +52,7 @@ textarea{resize:vertical;min-height:70px}
 .brand h1{font-size:23px;line-height:1.1;font-weight:700}
 .brand p{color:var(--muted);font-size:13px;margin-top:3px}
 .spacer{flex:1}
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom,0px))}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--surface);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom,0px))}
 .nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;border-radius:10px;padding:7px 8px;font-size:12px;font-weight:600;color:var(--muted)}
 .nav button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
 .nav .badge{position:absolute;top:3px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:var(--bad);color:var(--fill-ink);font:600 11px/18px var(--f-mono);text-align:center}
@@ -160,6 +160,8 @@ textarea{resize:vertical;min-height:70px}
 .srow.cx .sname{color:var(--muted);text-decoration:line-through}
 .srow.plan .sname{display:flex;align-items:flex-start;gap:8px}
 .srow.plan.done .ptitle{text-decoration:line-through;color:var(--muted)}
+.srow .acts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.mv-tag{font-size:11.5px;font-weight:600;color:var(--accent);background:var(--surface2);border-radius:99px;padding:1px 8px}
 .srow.plan .acts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .chk{width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);background:var(--surface);display:inline-grid;place-items:center;padding:0;flex:none;margin-top:1px;font:700 13px/1 var(--f-body);color:var(--fill-ink)}
 .chk[aria-checked="true"]{background:var(--ok);border-color:var(--ok)}
@@ -276,6 +278,25 @@ textarea{resize:vertical;min-height:70px}
 .fpair small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
 .fpair b{font:600 18px var(--f-mono)}
 .fnote{font-size:13px;color:var(--muted)}
+.qa{display:flex;gap:10px;align-items:center;margin-top:16px;padding:10px 12px}
+.qa input{flex:1;min-width:0;min-height:40px;padding:6px 10px}
+.cd{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:12px}
+.cd-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 14px;border-left:4px solid var(--bad)}
+.cd-item b{font-size:20px;line-height:1.2}
+.cd-item span{font-weight:600;font-size:14px}
+.cd-item small{color:var(--muted);font-size:12.5px}
+.wk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.wk-stats div{background:var(--surface2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
+.wk-stats b{font-size:20px;line-height:1.2}.wk-stats span{font-size:12px;color:var(--muted)}
+.tgrow{display:flex;align-items:center;gap:12px;min-height:44px;font-weight:600}
+.tgrow input[type=checkbox]{width:22px;height:22px;flex:none}
+.rem-note{font-size:12.5px;color:var(--muted)}
+.modal h3{font-size:15px}
+.sep{border:0;border-top:1px solid var(--line);width:100%;margin:2px 0}
+.tot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.tot label{font-size:13px;font-weight:600;color:var(--muted)}
+.tot input{width:84px;min-height:36px;padding:5px 8px}
+.sec-head .spacer{flex:1}
 .fnote.bad{color:var(--bad);font-weight:600}.fnote.warn{color:var(--warn);font-weight:600}.fnote.ok{color:var(--ok);font-weight:600}
 .next{border-top:1px solid var(--line);padding-top:12px}
 .next .lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -334,6 +355,9 @@ var MSHORT = MONTHS.map(function (m) { return m.slice(0, 3); });
 var DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 var DOWL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 var MIN_PCT = 85;
+var SLOT_T = ['8:45 - 10:00', '10:15 - 11:30', '11:45 - 1:00', '2:30 - 3:45', '4:00 - 5:15', '5:45 - 7:00'];   // the six fixed class periods
+var SLOT_L = ['8:45 am – 10:00 am', '10:15 am – 11:30 am', '11:45 am – 1:00 pm', '2:30 pm – 3:45 pm', '4:00 pm – 5:15 pm', '5:45 pm – 7:00 pm'];
+var PER_CREDIT = 8;   // sessions in the term per credit (1 credit = 8, 2 = 16, 3 = 24)
 var KIND_LABEL = { mid: 'Mid-term exam', end: 'End-term exam', last: 'Last day of classes', start: 'Term starts', res: 'Results', reg: 'Registration / regular classes' };
 var CAT_LABEL = { holiday: 'Holiday', exam: 'Exam', term: 'Term milestone', fest: 'Fest / event', other: 'Other' };
 function $(s) { return document.querySelector(s); }
@@ -381,6 +405,9 @@ var IC = {
   cal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
   chk: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>',
   down: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 15v3.5A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>',
+  trend: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18 9.5 12l3.5 3.5L20 7"/><path d="M15 7h5v5"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 15v3.5A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>',
   plus: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   l: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
@@ -393,8 +420,9 @@ var S = {
   tab: 'tt', view: 'month', cur: '', sel: '', posSet: false, loaded: false, mode: 'pending', uid: null, canImport: false,
   courses: {}, info: null, months: {}, evs: {},            // shared: timetable + academic calendar
   marks: {}, hidden: {}, plans: [],                        // private to this account
+  totals: {}, profile: { name: '', reg: '' }, rem: { cls: false, due: false, at: '18:00' }, moves: {}, extra: [],
   hideK: {}, allTerms: false, showAllUp: false, showAllDue: false,
-  modal: null, showAllQ: false, showAllSkip: false, confirmAll: false, open: {}
+  showAllWk: false, modal: null, showAllQ: false, showAllSkip: false, qa: '', confirmAll: false, open: {}
 };
 var R = {};
 var db = null;
@@ -403,7 +431,7 @@ var narrow = !!(window.matchMedia && matchMedia('(max-width:719px)').matches);
 S.view = narrow ? 'day' : 'month';
 try {
   var ui = JSON.parse(localStorage.getItem(UIKEY) || '{}');
-  if (ui.tab === 'tt' || ui.tab === 'att') S.tab = ui.tab;
+  if (ui.tab === 'tt' || ui.tab === 'att' || ui.tab === 'fc') S.tab = ui.tab;
   if (ui.view === 'month' || ui.view === 'week' || ui.view === 'day') S.view = ui.view;
   if (ui.hideK && typeof ui.hideK === 'object') S.hideK = ui.hideK;
   S.allTerms = !!ui.allTerms;
@@ -423,6 +451,7 @@ function pathOf(k) {
     case 'ev': return 'events/' + p[1];
     case 'mk': return base + 'marks-' + p[1];
     case 'pf': return base + 'prefs';
+    case 'aj': return base + 'adjust';
     default: return base + 'plans';
   }
 }
@@ -432,7 +461,8 @@ function docData(k) {
   if (p[0] === 'tt') return clone(S.months[p[1]] || { sessions: [], days: {} });
   if (p[0] === 'ev') return { list: clone(S.evs[p[1]] || []) };
   if (p[0] === 'mk') return { m: clone(S.marks[p[1]] || {}) };
-  if (p[0] === 'pf') return { hidden: clone(S.hidden) };
+  if (p[0] === 'pf') return { hidden: clone(S.hidden), totals: clone(S.totals), profile: clone(S.profile), rem: clone(S.rem) };
+  if (p[0] === 'aj') return { moves: clone(S.moves), extra: clone(S.extra) };
   return { list: clone(S.plans) };
 }
 function save(k) {
@@ -453,12 +483,13 @@ async function pump(k) {
   running[k] = false;
 }
 function saveLocal() {
-  try { localStorage.setItem(LOCKEY, JSON.stringify({ courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans })); } catch (e) {}
+  try { localStorage.setItem(LOCKEY, JSON.stringify({ courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra })); } catch (e) {}
 }
 function loadLocal() {
   try {
     var d = JSON.parse(localStorage.getItem(LOCKEY) || 'null');
-    if (d) { S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {}; S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.plans = d.plans || []; }
+    if (d) { S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {}; S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.plans = d.plans || [];
+      S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || []; }
   } catch (e) {}
 }
 var flags = {};
@@ -490,11 +521,12 @@ async function connect() {
     ready('ev');
   }, err);
   db.collection('data/users/' + uid).onSnapshot(function (q) {
-    S.marks = {}; S.hidden = {}; S.plans = [];
+    S.marks = {}; S.hidden = {}; S.plans = []; S.totals = {}; S.moves = {}; S.extra = [];
     q.docs.forEach(function (x) {
       var v = x.data() || {};
       if (x.id.indexOf('marks-') === 0) S.marks[x.id.slice(6)] = clone(v.m || {});
-      else if (x.id === 'prefs') S.hidden = clone(v.hidden || {});
+      else if (x.id === 'prefs') { S.hidden = clone(v.hidden || {}); S.totals = clone(v.totals || {}); S.profile = clone(v.profile || { name: '', reg: '' }); S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, v.rem || {}); }
+      else if (x.id === 'adjust') { S.moves = clone(v.moves || {}); S.extra = clone(v.extra || []); }
       else if (x.id === 'plans') S.plans = clone(v.list || []);
     });
     ready('me');
@@ -522,9 +554,14 @@ function prep() {
     Object.assign(R.dayInfo, m.days || {});
     var mk = S.marks[ym] || {};
     (m.sessions || []).forEach(function (x) {
-      var key = ttSessionKey(x);
-      all.push({ d: x.d, s: x.s, t: x.t, c: x.c, n: x.n, key: key, st: mk[key] || null });
+      var key = ttSessionKey(x), mv = S.moves[key], d = x.d, s = x.s, t = x.t;
+      if (mv && mv.d && SLOT_T[mv.s]) { d = mv.d; s = mv.s; t = SLOT_T[mv.s]; }
+      all.push({ d: d, s: s, t: t, c: x.c, n: x.n, key: key, st: mk[key] || null, moved: mv && mv.d ? { d: x.d, s: x.s, t: x.t } : null });
     });
+  });
+  S.extra.forEach(function (e) {      // one-off classes added by hand (kept apart from imports)
+    var st = (S.marks[ymOfKey(e.key)] || {})[e.key] || null;
+    all.push({ d: e.d, s: e.s, t: SLOT_T[e.s] || '', c: e.c, n: null, key: e.key, st: st, extra: true, id: e.id });
   });
   all.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : a.s - b.s || (a.c < b.c ? -1 : 1); });
   R.all = all; R.byDate = {}; R.byCourse = {};
@@ -554,6 +591,8 @@ function prep() {
     });
   });
   runs.forEach(function (r) { r.items.forEach(function (ev, i) { ev.i = i + 1; ev.n = r.items.length; }); });
+  R.examRuns = runs.filter(function (r) { return r.k === 'exam'; }).map(function (r) { return { title: r.title, start: r.start, end: r.end, n: r.items.length }; })
+    .sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; });
   R.evAll = evAll;
   R.ev = evAll.filter(function (ev) { return !S.hideK[ev.k]; });
   R.evByDate = {};
@@ -568,7 +607,14 @@ function prep() {
   R.plByDate = {};
   R.due = [];
   var showPl = !S.hideK.mine;
+  var T0 = todayS();
   if (showPl) S.plans.forEach(function (p) {
+    if (p.k === 'event' && p.rp) {                      // repeating event: expand into dated occurrences
+      var occ = repDates(p), nextOcc = null;
+      occ.forEach(function (d) { (R.plByDate[d] || (R.plByDate[d] = [])).push({ p: p, i: 1, n: 1, rec: true }); if (!nextOcc && d >= T0) nextOcc = d; });
+      if (nextOcc) R.upRuns.push({ k: 'mine', title: p.t, start: nextOcc, end: nextOcc, n: 1, mine: true, id: p.id, rep: repLabel(p) });
+      return;
+    }
     var end = p.k === 'event' && p.e && p.e > p.d ? p.e : p.d, n = daysBetween(p.d, end) + 1, d = p.d;
     for (var i = 1; i <= n && i <= 92; i++) { (R.plByDate[d] || (R.plByDate[d] = [])).push({ p: p, i: i, n: n }); d = addD(d, 1); }
     if (p.k === 'task' && !p.x) R.due.push(p);
@@ -587,13 +633,25 @@ function initPos() {
   S.sel = T >= dates[0] && T <= dates[dates.length - 1] ? T : (T < dates[0] ? dates[0] : dates[dates.length - 1]);
   S.cur = S.sel.slice(0, 7);
 }
+function termTotal(ck) { var v = S.totals[ck]; return v != null && v >= 0 ? v : co(ck).credits * PER_CREDIT; }
+function repLabel(p) { return p.rp === 'd' ? 'every day' : p.rp === 'wd' ? 'every weekday' : 'every ' + DOWL[dowIdx(p.d)]; }
+function repDates(p) {         // dates a repeating event falls on (until the end date, or 26 weeks)
+  var out = [], d = p.d, end = p.ru && p.ru >= p.d ? p.ru : addD(p.d, 26 * 7 - 1);
+  for (var i = 0; i < 400 && d <= end; i++) {
+    if (p.rp === 'd' || (p.rp === 'wd' && dowIdx(d) < 5)) out.push(d);
+    else if (p.rp === 'w') { out.push(d); d = addD(d, 6); }
+    d = addD(d, 1);
+  }
+  return out;
+}
 function stats(ck) {
   if (R.stc && R.stc[ck]) return R.stc[ck];
-  var list = R.byCourse[ck] || [], f = ttForecast(list, co(ck).credits);
+  var list = R.byCourse[ck] || [], f = ttForecast(list, co(ck).credits, termTotal(ck));
   var pending = list.filter(function (x) { return !x.st && started(x); });
   var left = list.filter(function (x) { return !x.st; });
   f.pending = pending; f.next = list.filter(function (x) { return !x.st && !started(x); })[0] || null;
-  f.endD = left.length ? left[left.length - 1].d : (list.length ? list[list.length - 1].d : null);
+  f.endD = list.length ? list[list.length - 1].d : null;    // last class on the imported timetable
+  f.custom = S.totals[ck] != null;
   (R.stc || (R.stc = {}))[ck] = f;
   return f;
 }
@@ -642,19 +700,22 @@ function planById(id) { return S.plans.filter(function (p) { return p.id === id;
 function openPlan(id, date, kind) {
   var p = id ? planById(id) : null;
   S.modal = { stage: 'plan', edit: !!p, err: '', confirmDel: false,
-    f: p ? Object.assign({ e: '', ts: '', te: '', c: '', n: '' }, p) : { k: kind || 'task', t: '', d: date || S.sel || todayS(), e: '', ts: '', te: '', c: '', n: '' } };
+    f: p ? Object.assign({ e: '', ts: '', te: '', c: '', n: '', rp: '', ru: '' }, p) : { k: kind || 'task', t: '', d: date || S.sel || todayS(), e: '', ts: '', te: '', c: '', n: '', rp: '', ru: '', s: '' } };
   render();
 }
 function savePlan() {
   var M = S.modal, f = M.f, t = String(f.t || '').trim();
   var bad = function (m) { M.err = m; render(); };
+  if (f.k === 'class') return saveClass(M, bad);
   if (!t) return bad('Give it a title.');
   if (!f.d) return bad('Pick a date.');
-  if (f.k === 'event' && f.e && f.e < f.d) return bad('The end date is before the start date.');
+  if (f.k === 'event' && f.rp && f.ru && f.ru < f.d) return bad('The repeat end date is before the start date.');
+  if (f.k === 'event' && !f.rp && f.e && f.e < f.d) return bad('The end date is before the start date.');
   if (f.k === 'event' && f.e && daysBetween(f.d, f.e) > 60) return bad('Events can span up to 60 days.');
-  if (f.k === 'event' && f.ts && f.te && (!f.e || f.e === f.d) && f.te <= f.ts) return bad('The end time must be after the start time.');
+  if (f.k === 'event' && f.ts && f.te && (f.rp || !f.e || f.e === f.d) && f.te <= f.ts) return bad('The end time must be after the start time.');
   var item = { id: f.id || newId(), k: f.k, t: t.slice(0, 120), d: f.d };
-  if (f.k === 'event' && f.e && f.e !== f.d) item.e = f.e;
+  if (f.k === 'event' && f.rp) { item.rp = f.rp; if (f.ru) item.ru = f.ru; }
+  else if (f.k === 'event' && f.e && f.e !== f.d) item.e = f.e;
   if (f.ts) item.ts = f.ts;
   if (f.k === 'event' && f.te) item.te = f.te;
   if (f.c) item.c = f.c;
@@ -666,6 +727,39 @@ function savePlan() {
   S.modal = null; S.sel = item.d; S.cur = item.d.slice(0, 7);
   render(); toast(M.edit ? 'Saved' : (item.k === 'task' ? 'Assignment added' : 'Event added'));
 }
+function saveClass(M, bad) {
+  var f = M.f;
+  if (!f.c) return bad('Choose the subject.');
+  if (!f.d) return bad('Pick a date.');
+  if (f.s === '' || f.s == null || !SLOT_T[+f.s]) return bad('Choose a class time.');
+  var s = +f.s;
+  if (R.all.some(function (y) { return y.d === f.d && y.s === s && y.c === f.c; })) return bad('This subject already has a class then.');
+  var id = newId();
+  S.extra = S.extra.concat([{ id: id, key: f.d.replace(/-/g, '') + '-' + s + '-' + f.c + '~' + id, c: f.c, d: f.d, s: s }]);
+  save('aj'); S.modal = null; S.sel = f.d; S.cur = f.d.slice(0, 7); render(); toast('Class added');
+}
+function openMove(x) {
+  S.modal = { stage: 'move', key: x.key, extra: !!x.extra, id: x.id || null, c: x.c, isMoved: !!x.moved, confirmDel: false, err: '',
+    from: x.moved || { d: x.d, s: x.s, t: x.t }, f: { d: x.d, s: String(x.s) } };
+  render();
+}
+function saveMove() {
+  var M = S.modal, f = M.f, s = +f.s, bad = function (m) { M.err = m; render(); };
+  if (!f.d) return bad('Pick a date.');
+  if (!SLOT_T[s]) return bad('Choose a class time.');
+  if (R.all.some(function (y) { return y.key !== M.key && y.d === f.d && y.s === s && y.c === M.c; })) return bad('This subject already has a class then.');
+  if (M.extra) S.extra = S.extra.map(function (e) { return e.id === M.id ? Object.assign({}, e, { d: f.d, s: s }) : e; });
+  else if (f.d === M.from.d && s === M.from.s) delete S.moves[M.key];
+  else S.moves[M.key] = { d: f.d, s: s };
+  save('aj'); S.modal = null; S.sel = f.d; S.cur = f.d.slice(0, 7); render(); toast(M.extra ? 'Saved' : 'Class rescheduled');
+}
+function restoreMove() { var M = S.modal; delete S.moves[M.key]; save('aj'); S.sel = M.from.d; S.cur = M.from.d.slice(0, 7); S.modal = null; render(); toast('Back to the original time'); }
+function deleteExtra() {
+  var M = S.modal, ym = ymOfKey(M.key);
+  S.extra = S.extra.filter(function (e) { return e.id !== M.id; });
+  if (S.marks[ym] && S.marks[ym][M.key]) { delete S.marks[ym][M.key]; save('mk:' + ym); }
+  save('aj'); S.modal = null; render(); toast('Class removed');
+}
 function deletePlan(id) { S.plans = S.plans.filter(function (p) { return p.id !== id; }); save('pl'); S.modal = null; render(); toast('Deleted'); }
 function toggleDone(id) {
   var p = planById(id); if (!p) return;
@@ -676,7 +770,7 @@ function toggleDone(id) {
 /* backup + restore (phone-only storage) */
 function backupObj() {
   return { app: 'class-planner', v: 1, saved: new Date().toISOString(),
-    data: { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans } };
+    data: { courses: S.courses, info: S.info, months: S.months, evs: S.evs, marks: S.marks, hidden: S.hidden, plans: S.plans, totals: S.totals, profile: S.profile, rem: S.rem, moves: S.moves, extra: S.extra } };
 }
 function exportBackup() {
   var json = JSON.stringify(backupObj()), name = 'class-planner-backup-' + todayS() + '.json';
@@ -701,6 +795,7 @@ function applyRestore() {
   var d = S.modal.o.data;
   S.courses = d.courses || {}; S.info = d.info || null; S.months = d.months || {}; S.evs = d.evs || {};
   S.marks = d.marks || {}; S.hidden = d.hidden || {}; S.plans = d.plans || [];
+  S.totals = d.totals || {}; S.profile = d.profile || { name: '', reg: '' }; S.rem = Object.assign({ cls: false, due: false, at: '18:00' }, d.rem || {}); S.moves = d.moves || {}; S.extra = d.extra || [];
   saveLocal(); S.modal = null; S.posSet = false; S.sel = ''; render(); toast('Backup restored');
 }
 
@@ -765,6 +860,7 @@ function seg(x, small) {
 function skipInfo(x) {           // can-I-skip numbers for one class that has not started and is not marked
   if (x.st || started(x) || !tracked(x.c)) return null;
   var f = stats(x.c);
+  if (f.R < 1) return null;      // the course already has all its sessions
   return { f: f, s: ttSkip(f) };
 }
 function skipWhy(s) {
@@ -812,11 +908,12 @@ function header() {
   var nav = h('nav', { class: 'nav', 'aria-label': 'Sections' },
     h('button', { type: 'button', 'aria-current': S.tab === 'tt' ? 'page' : null, onclick: function () { setTab('tt'); } }, ic('cal'), 'Timetable'),
     h('button', { type: 'button', 'aria-current': S.tab === 'att' ? 'page' : null, onclick: function () { setTab('att'); } }, ic('chk'), 'Attendance',
-      R.pending && R.pending.length ? h('span', { class: 'badge', 'aria-label': R.pending.length + ' classes to mark' }, R.pending.length) : null));
+      R.pending && R.pending.length ? h('span', { class: 'badge', 'aria-label': R.pending.length + ' classes to mark' }, R.pending.length) : null),
+    h('button', { type: 'button', 'aria-current': S.tab === 'fc' ? 'page' : null, onclick: function () { setTab('fc'); } }, ic('trend'), 'Forecast'));
   return h('header', { class: 'top' },
     h('div', { class: 'brand' }, h('h1', null, 'Class Planner'), sub && h('p', null, sub)),
     nav, h('span', { class: 'spacer' }),
-    S.mode === 'local' ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Backup and restore', onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('down'), h('span', { class: 'lbl' }, 'Backup')) : null,
+    S.mode === 'local' ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Settings, reminders and backup', onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('gear'), h('span', { class: 'lbl' }, 'Settings')) : null,
     S.canImport ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Import timetable or calendar', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), h('span', { class: 'lbl' }, 'Import')) : null);
 }
 
@@ -861,10 +958,13 @@ function sessionRow(x, first) {
   var meta = [codeChip(x.c)];
   if (c.faculty && c.faculty !== 'NA') meta.push(h('span', null, c.faculty));
   meta.push(h('span', null, (x.n ? 'Session ' + x.n + ' · ' : '') + c.credits + (c.credits === 1 ? ' credit' : ' credits')));
+  if (x.moved) meta.push(h('span', { class: 'mv-tag' }, 'Moved from ' + fmtShort(x.moved.d) + ', ' + tparts(x.moved.t)[0]));
+  if (x.extra) meta.push(h('span', { class: 'mv-tag' }, 'One-off class'));
   return h('article', { class: 'srow' + (x.st === 'X' ? ' cx' : '') + (first ? ' first' : '') },
     h('div', { class: 'stime' }, tp[0], h('span', { class: 'tend' }, tp[1] || '')),
     h('div', null, h('div', { class: 'sname' }, c.name), h('div', { class: 'smeta' }, meta),
-      tracked(x.c) ? [seg(x), skipLine(x)] : h('p', { class: 'hint' }, 'Not tracked for attendance.')));
+      tracked(x.c) ? seg(x) : h('p', { class: 'hint' }, 'Not tracked for attendance.'),
+      h('div', { class: 'acts' }, h('button', { type: 'button', class: 'btn sm', 'data-fk': 'mv-' + x.key, onclick: function () { openMove(x); } }, x.extra ? 'Edit this class' : 'Reschedule'))));
 }
 function planRow(it, first) {
   var p = it.p, T = todayS(), late = p.k === 'task' && !p.x && p.d < T;
@@ -875,7 +975,7 @@ function planRow(it, first) {
     : [h('span', { class: 'pmark', 'aria-hidden': 'true' }), h('span', { class: 'ptitle' }, p.t)];
   var meta = [];
   if (p.c && S.courses[p.c]) meta.push(codeChip(p.c));
-  meta.push(h('span', null, p.k === 'task' ? 'My assignment' : 'My event' + (it.n > 1 ? ' · day ' + it.i + ' of ' + it.n : '')));
+  meta.push(h('span', null, p.k === 'task' ? 'My assignment' : 'My event' + (it.n > 1 ? ' · day ' + it.i + ' of ' + it.n : '') + (p.rp ? ' · ' + repLabel(p) : '')));
   if (late) meta.push(h('span', { class: 'late-tag' }, 'Overdue'));
   if (p.n) meta.push(h('span', null, p.n));
   return h('article', { class: 'srow plan' + (p.x ? ' done' : '') + (first ? ' first' : '') },
@@ -999,14 +1099,78 @@ function upCard() {
     var when = (r.start === r.end ? fmtShort(r.start) : fmtShort(r.start) + ' – ' + fmtShort(r.end)) + (r.n > 1 ? ' (' + r.n + ' days)' : '');
     card.append(h('div', { class: 'listitem ek-' + (r.mine ? 'mine' : r.k) },
       h('span', { class: 'dmark', 'aria-hidden': 'true' }),
-      h('button', { type: 'button', class: 'li-main', onclick: function () { pick(r.start <= T ? T : r.start); window.scrollTo(0, 0); } }, h('span', { class: 't' }, r.title), h('span', { class: 's' }, when, r.mine ? ' · mine' : ' · ' + CAT_LABEL[r.k])),
+      h('button', { type: 'button', class: 'li-main', onclick: function () { pick(r.start <= T ? T : r.start); window.scrollTo(0, 0); } }, h('span', { class: 't' }, r.title), h('span', { class: 's' }, when, r.mine ? ' · mine' + (r.rep ? ' · ' + r.rep : '') : ' · ' + CAT_LABEL[r.k])),
       h('span', { class: 'li-when' }, rel)));
+  });
+  return card;
+}
+function quickAdd() {
+  var go = function () {
+    var txt = String(S.qa || '').trim(); if (!txt) return;
+    var r = ttQuickParse(txt, todayS());
+    S.qa = '';
+    S.modal = { stage: 'plan', edit: false, err: '', confirmDel: false, quick: true, focused: true,
+      f: { k: r.k, t: r.t || txt, d: r.d, e: '', ts: r.ts || '', te: '', c: '', n: '', rp: r.k === 'event' ? (r.rp || '') : '', ru: '', s: '' } };
+    render();
+  };
+  return h('form', { class: 'card qa', 'aria-label': 'Quick add', onsubmit: function (e) { e.preventDefault(); go(); } },
+    h('label', { for: 'qa', class: 'sr' }, 'Quick add a plan'),
+    h('input', { id: 'qa', type: 'text', 'data-fk': 'qa', autocomplete: 'off', maxlength: '120', value: S.qa || '', placeholder: 'Quick add: "Study group every Wednesday 6pm" or "FM report due Fri 5pm"', oninput: function (e) { S.qa = e.target.value; } }),
+    h('button', { type: 'submit', class: 'btn pri' }, ic('plus'), 'Add'));
+}
+function countdown() {
+  var T = todayS(), list = (R.examRuns || []).filter(function (r) { return r.end >= T && !/result/i.test(r.title); }).slice(0, 2);
+  if (!list.length) return null;
+  return h('section', { class: 'cd', 'aria-label': 'Exam countdown' }, list.map(function (r) {
+    var on = r.start <= T, dd = daysBetween(T, r.start);
+    var big = on ? 'On now' : dd === 0 ? 'Today' : dd === 1 ? 'Tomorrow' : 'In ' + dd + ' days';
+    var span = r.start === r.end ? fmtShort(r.start) : fmtShort(r.start) + ' – ' + fmtShort(r.end);
+    return h('button', { type: 'button', class: 'cd-item', 'aria-label': r.title + ' ' + big.toLowerCase() + ', ' + span, onclick: function () { pick(on ? T : r.start); window.scrollTo(0, 0); } },
+      h('b', null, big), h('span', null, r.title), h('small', null, span));
+  }));
+}
+function weekCard() {
+  var T = todayS(), mon = mondayOf(T), sun = addD(mon, 6), items = [];
+  var cls = R.all.filter(function (x) { return x.d >= T && x.d <= sun && x.st !== 'X' && tracked(x.c) && !x.st; }).length;
+  R.due.filter(function (p) { return p.d <= sun; }).forEach(function (p) { items.push({ d: p.d, ts: p.ts || '99', node: 'task', p: p }); });
+  var evN = 0;
+  for (var d = T; d <= sun; d = addD(d, 1)) {
+    (R.plByDate[d] || []).forEach(function (it) { if (it.p.k === 'event') { evN++; items.push({ d: d, ts: it.p.ts || '00', node: 'plan', p: it.p }); } });
+    (R.evByDate[d] || []).filter(function (e) { return e.k === 'exam'; }).forEach(function (e) { items.push({ d: d, ts: '00', node: 'exam', title: e.title }); });
+  }
+  items.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; });
+  var dueN = R.due.filter(function (p) { return p.d <= sun; }).length;
+  var card = h('section', { class: 'card', 'aria-label': 'This week' },
+    h('div', { class: 'qhead' }, h('h3', null, 'This week'), h('span', { class: 'hint', style: 'margin:0' }, fmtShort(mon) + ' – ' + fmtShort(sun)), h('span', { class: 'spacer' }),
+      items.length > 6 ? h('button', { type: 'button', class: 'btn sm', onclick: function () { S.showAllWk = !S.showAllWk; render(); } }, S.showAllWk ? 'Show fewer' : 'Show all ' + items.length) : null),
+    h('div', { class: 'wk-stats' },
+      h('div', null, h('b', null, cls), h('span', null, cls === 1 ? 'class to go' : 'classes to go')),
+      h('div', null, h('b', null, dueN), h('span', null, 'due or overdue')),
+      h('div', null, h('b', null, evN), h('span', null, evN === 1 ? 'event' : 'events'))));
+  if (!items.length) { card.append(h('p', { class: 'empty-day' }, 'Nothing due or planned this week.')); return card; }
+  (S.showAllWk ? items : items.slice(0, 6)).forEach(function (it) {
+    var when = it.d < T ? 'Overdue' : it.d === T ? 'Today' : it.d === addD(T, 1) ? 'Tomorrow' : fmtShort(it.d);
+    if (it.node === 'task') {
+      var p = it.p;
+      card.append(h('div', { class: 'listitem' },
+        h('button', { type: 'button', class: 'chk', role: 'checkbox', 'aria-checked': 'false', 'aria-label': 'Mark done: ' + p.t, 'data-fk': 'wkchk-' + p.id, onclick: function () { toggleDone(p.id); } }),
+        h('button', { type: 'button', class: 'li-main', onclick: function () { openPlan(p.id); } }, h('span', { class: 't' }, p.t), h('span', { class: 's' }, 'Assignment' + (p.ts ? ' · ' + fmt12(p.ts) : ''))),
+        h('span', { class: 'li-when' + (it.d < T ? ' late' : '') }, when)));
+    } else if (it.node === 'plan') {
+      card.append(h('div', { class: 'listitem ek-mine' }, h('span', { class: 'dmark', 'aria-hidden': 'true' }),
+        h('button', { type: 'button', class: 'li-main', onclick: function () { openPlan(it.p.id); } }, h('span', { class: 't' }, it.p.t), h('span', { class: 's' }, 'My event' + (it.p.ts ? ' · ' + fmt12(it.p.ts) : '') + (it.p.rp ? ' · ' + repLabel(it.p) : ''))),
+        h('span', { class: 'li-when' }, when)));
+    } else {
+      card.append(h('div', { class: 'listitem ek-exam' }, h('span', { class: 'dmark', 'aria-hidden': 'true' }),
+        h('button', { type: 'button', class: 'li-main', onclick: function () { pick(it.d); window.scrollTo(0, 0); } }, h('span', { class: 't' }, it.title), h('span', { class: 's' }, 'Exam')),
+        h('span', { class: 'li-when' }, when)));
+    }
   });
   return card;
 }
 function ttSection() {
   if (!R.hasData) return emptyState();
-  return h('div', null, toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), h('div', { class: 'twocol' }, dueCard(), upCard()));
+  return h('div', null, countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
 }
 
 /* ----- attendance ----- */
@@ -1037,32 +1201,32 @@ function forecastBlock(f) {
   if (!f.held && !f.R) return null;
   var p = function (v) { return fmtPct(v) + '%'; };
   var xnote = f.X ? h('p', { class: 'fnote' }, f.X + (f.X === 1 ? ' class' : ' classes') + ' cancelled, not counted.') : null;
-  if (!f.R) return h('div', { class: 'fc' }, h('div', { class: 'lbl' }, h('span', null, 'Forecast'), h('span', null, 'No classes left in the imported timetable')), xnote);
+  if (!f.R) return h('div', { class: 'fc' }, h('div', { class: 'lbl' }, h('span', null, 'Forecast'), h('span', null, 'All ' + f.term + ' sessions held')), xnote);
   var notes = [];
   if (f.overLimit) notes.push(h('p', { class: 'fnote bad' }, 'You are already over the miss limit (' + f.M + ' missed, ' + f.allowed + ' allowed).'));
-  else if (f.unreachable) notes.push(h('p', { class: 'fnote bad' }, 'Below ' + MIN_PCT + '% even if you attend every class left. Best possible finish: ' + p(f.best) + '.'));
-  else if (f.afford === 0) notes.push(h('p', { class: 'fnote warn' }, 'You cannot miss any more classes. Attend all ' + f.R + ' left to finish at ' + MIN_PCT + '%+.'));
-  else notes.push(h('p', { class: 'fnote ok' }, 'You can still miss ' + f.afford + ' of the ' + f.R + ' classes left and finish at ' + MIN_PCT + '%+.'));
+  else if (f.unreachable) notes.push(h('p', { class: 'fnote bad' }, 'Below ' + MIN_PCT + '% even if you attend every session left. Best possible finish: ' + p(f.best) + '.'));
+  else if (f.afford === 0) notes.push(h('p', { class: 'fnote warn' }, 'You cannot miss any more sessions. Attend all ' + f.R + ' left to finish at ' + MIN_PCT + '%+.'));
+  else notes.push(h('p', { class: 'fnote ok' }, 'You can still miss ' + f.afford + ' of the ' + f.R + ' sessions left and finish at ' + MIN_PCT + '%+.'));
   if (f.low) notes.push(h('p', { class: 'fnote' }, f.need
     ? 'You are below ' + MIN_PCT + '% now. Attend the next ' + f.need + (f.need === 1 ? ' class' : ' classes') + ' in a row to get back to ' + MIN_PCT + '%.'
-    : 'You cannot get back to ' + MIN_PCT + '% with the classes left in the imported timetable.'));
+    : 'You cannot get back to ' + MIN_PCT + '% with the sessions left in the term.'));
   notes.push(xnote);
   var bar = h('div', { class: 'fbar', role: 'img', 'aria-label': 'Finish between ' + p(f.worst) + ' and ' + p(f.best) + '; minimum ' + MIN_PCT + ' percent' },
     h('div', { class: 'band', style: 'left:' + f.worst + '%;width:' + Math.max(f.best - f.worst, 1) + '%' }),
     f.held ? h('span', { class: 'now', style: 'left:' + Math.min(100, f.pct) + '%', title: 'Now' }) : null,
     h('span', { class: 'tick' }), h('span', { class: 'tl' }, MIN_PCT + '%'));
   return h('div', { class: 'fc' },
-    h('div', { class: 'lbl' }, h('span', null, 'Forecast to ' + (f.endD ? fmtShort(f.endD) : 'the end')), h('span', null, f.R + (f.R === 1 ? ' class left' : ' classes left'))),
+    h('div', { class: 'lbl' }, h('span', null, 'Forecast to end of term'), h('span', null, f.R + (f.R === 1 ? ' session left' : ' sessions left'))),
     bar,
-    h('div', { class: 'fpair' }, h('div', null, h('small', null, 'Attend all left'), h('b', null, p(f.best))), h('div', null, h('small', null, 'Miss all left'), h('b', null, p(f.worst)))),
+    h('div', { class: 'fpair' }, h('div', null, h('small', null, 'Attend every session left'), h('b', null, p(f.best))), h('div', null, h('small', null, 'Miss every session left'), h('b', null, p(f.worst)))),
     notes);
 }
 function skipCard() {
   var items = R.all.filter(function (x) { return skipInfo(x); });
-  var card = h('section', { class: 'card', 'aria-label': 'Can I skip?' },
+  var card = h('section', { class: 'card', 'aria-label': 'Can I skip?', style: 'margin-top:4px' },
     h('div', { class: 'qhead' }, h('h3', null, 'Can I skip?'), h('span', { class: 'spacer' }),
       items.length > 6 ? h('button', { type: 'button', class: 'btn sm', onclick: function () { S.showAllSkip = !S.showAllSkip; render(); } }, S.showAllSkip ? 'Show fewer' : 'Show all ' + items.length) : null),
-    h('p', { class: 'hint' }, 'Your standing if you attend or miss just that class, with your other classes attended.'));
+    h('p', { class: 'hint' }, 'Your standing if you attend or miss just that class, with your other sessions attended. Uses the full term (' + PER_CREDIT + ' sessions per credit).'));
   if (!items.length) { card.append(h('p', { class: 'empty-day' }, 'No upcoming classes left to check.')); return card; }
   (S.showAllSkip ? items : items.slice(0, 6)).forEach(function (x) {
     var k = skipInfo(x), s = k.s, label = s.verdict === 'ok' ? 'Safe to skip' : s.verdict === 'warn' ? 'Last allowed miss' : 'Do not skip';
@@ -1076,13 +1240,16 @@ function skipCard() {
   });
   return card;
 }
+function statusOf(st) {
+  if (!st.held) return ['Not started', 'idle'];
+  if (st.M > st.allowed) return ['Limit exceeded', 'bad'];
+  if (st.M === st.allowed) return ['No misses left', 'warn'];
+  var left = st.allowed - st.M;
+  return [left + (left === 1 ? ' miss left' : ' misses left'), 'ok'];
+}
 function subjectCard(ck) {
   var c = co(ck), st = stats(ck), isOpen = !!S.open[ck];
-  var status, scls;
-  if (!st.held) { status = 'Not started'; scls = 'idle'; }
-  else if (st.M > st.allowed) { status = 'Limit exceeded'; scls = 'bad'; }
-  else if (st.M === st.allowed) { status = 'No misses left'; scls = 'warn'; }
-  else { var left = st.allowed - st.M; status = left + (left === 1 ? ' miss left' : ' misses left'); scls = 'ok'; }
+  var sc = statusOf(st), status = sc[0], scls = sc[1];
   var low = st.pct != null && st.pct < MIN_PCT;
   var pips = h('span', { class: 'pips', 'aria-hidden': 'true' });
   for (var i = 0; i < Math.max(st.allowed, st.M); i++) pips.append(h('span', { class: 'pip' + (i < st.M ? ' used' : '') }));
@@ -1102,8 +1269,7 @@ function subjectCard(ck) {
       h('div', { class: 'what' }, (nxt.n ? 'Session ' + nxt.n + ' · ' : '') + fmtShort(nxt.d) + ', ' + tparts(nxt.t)[0]), seg(nxt)]);
   } else {
     add(next, [h('div', { class: 'lbl' }, 'Next to mark'), h('div', { class: 'what' }, 'All marked so far'),
-      st.next ? h('p', { class: 'hint' }, 'Next class: ' + fmtShort(st.next.d) + ', ' + tparts(st.next.t)[0]) : null,
-      st.next ? skipLine(st.next) : null]);
+      st.next ? h('p', { class: 'hint' }, 'Next class: ' + fmtShort(st.next.d) + ', ' + tparts(st.next.t)[0]) : null]);
   }
   var list = R.byCourse[ck] || [];
   var log = h('div', null, h('button', { type: 'button', class: 'log-toggle', 'aria-expanded': isOpen ? 'true' : 'false', onclick: function () { S.open[ck] = !isOpen; render(); } }, (isOpen ? 'Hide' : 'Show') + ' class log (' + list.length + ')'));
@@ -1120,7 +1286,7 @@ function subjectCard(ck) {
   sub.push(h('span', null, c.credits + (c.credits === 1 ? ' credit' : ' credits')));
   return h('article', { class: 'card sc' },
     h('div', { class: 'sc-top' }, h('div', { style: 'min-width:0' }, h('h3', null, c.name), h('div', { class: 'meta' }, sub)), h('span', { class: 'status ' + scls }, status)),
-    metric, stat, forecastBlock(st), next, log);
+    metric, stat, next, log);
 }
 function attSection() {
   if (!R.hasData) return emptyState();
@@ -1128,8 +1294,8 @@ function attSection() {
   var shown = keys.filter(tracked), hid = keys.filter(function (k) { return !tracked(k); });
   var subs = h('div', { class: 'subs' }, shown.map(subjectCard));
   var out = [
-    h('div', { class: 'sec-head' }, h('h2', null, 'Attendance'), h('p', null, 'Minimum ' + MIN_PCT + '%. You can miss as many classes as the course has credits.')),
-    queue(), skipCard(), subs];
+    h('div', { class: 'sec-head' }, h('h2', null, 'Attendance'), h('p', null, 'Minimum ' + MIN_PCT + '%. You can miss as many classes as the course has credits.'), h('span', { class: 'spacer' }), reportBtn()),
+    queue(), subs];
   if (hid.length) out.push(h('div', { class: 'hidden-list' }, 'Not tracked:', hid.map(function (k) {
     return h('span', null, co(k).code + ' · ' + co(k).name + ' ', h('button', { type: 'button', class: 'log-toggle', onclick: function () { setHidden(k, false); } }, 'Track'));
   })));
@@ -1137,27 +1303,168 @@ function attSection() {
   return h('div', null, out);
 }
 
+/* ----- forecast ----- */
+function setTotal(ck, v) {
+  var n = parseInt(v, 10);
+  if (v == null || isNaN(n) || n === co(ck).credits * PER_CREDIT) delete S.totals[ck]; else S.totals[ck] = Math.max(1, Math.min(60, n));
+  save('pf'); render();
+}
+function fcCard(ck) {
+  var c = co(ck), f = stats(ck), sc = statusOf(f);
+  var sub = [codeChip(ck)];
+  if (c.faculty && c.faculty !== 'NA') sub.push(h('span', null, c.faculty));
+  sub.push(h('span', null, c.credits + (c.credits === 1 ? ' credit' : ' credits') + ' · may miss ' + f.allowed));
+  var line = f.held + ' of ' + f.term + ' sessions held' + (f.sched ? ' · ' + f.sched + ' more on your timetable' : '');
+  var tot = h('div', { class: 'tot' }, h('label', { for: 'tot-' + ck }, 'Sessions in this course'),
+    h('input', { id: 'tot-' + ck, type: 'number', inputmode: 'numeric', min: '1', max: '60', value: String(f.term), 'data-fk': 'tot-' + ck, onchange: function (e) { setTotal(ck, e.target.value); } }),
+    f.custom ? h('button', { type: 'button', class: 'btn sm', onclick: function () { setTotal(ck, null); } }, 'Reset to ' + c.credits * PER_CREDIT) : null);
+  return h('article', { class: 'card sc' },
+    h('div', { class: 'sc-top' }, h('div', { style: 'min-width:0' }, h('h3', null, c.name), h('div', { class: 'meta' }, sub)), h('span', { class: 'status ' + sc[1] }, sc[0])),
+    h('p', { class: 'fnote' }, line + (f.pct != null ? ' · now ' + fmtPct(f.pct) + '%' : '')),
+    forecastBlock(f), tot);
+}
+function fcSection() {
+  if (!R.hasData) return emptyState();
+  var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+  return h('div', null,
+    h('div', { class: 'sec-head' }, h('h2', null, 'Forecast'), h('p', null, 'Each credit has ' + PER_CREDIT + ' sessions (1 credit = 8, 2 = 16, 3 = 24). You may miss as many sessions as the credits, and must stay at ' + MIN_PCT + '%.'),
+      h('span', { class: 'spacer' }), reportBtn()),
+    skipCard(),
+    h('div', { class: 'subs' }, keys.map(fcCard)),
+    h('p', { class: 'foot' }, 'Cancelled classes are not counted, so the course still has all its sessions to go. If a course has a different number of sessions (for example a one-off test), change it on its card.'));
+}
+function reportBtn() {
+  return h('button', { type: 'button', class: 'btn sm', onclick: function () { S.modal = { stage: 'report', busy: false }; render(); } }, ic('doc'), 'Report');
+}
+
+/* ----- report ----- */
+function buildReport(withList) {
+  var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+  var lab = { A: 'Attended', M: 'Missed', C: 'Condonation', X: 'Cancelled' };
+  var courses = keys.map(function (ck) {
+    var f = stats(ck), c = co(ck);
+    var sessions = withList ? R.byCourse[ck].filter(function (x) { return x.st || started(x); }).map(function (x) { return { d: x.d, t: x.t, n: x.n, st: lab[x.st] || 'Not marked' }; }) : [];
+    return { name: c.name, code: c.code, credits: c.credits, allowed: f.allowed, term: f.term, held: f.held, A: f.A, C: f.C, M: f.M, X: f.X, pct: f.pct, status: statusOf(f)[0], sessions: sessions };
+  });
+  var i = S.info || {};
+  return { name: S.profile.name || '', reg: S.profile.reg || '', info: [i.section, i.term].filter(Boolean).join(' · '), date: todayS(), min: MIN_PCT, withList: withList, courses: courses };
+}
+function toB64(u8) { var s = '', n = 0x8000; for (var i = 0; i < u8.length; i += n) s += String.fromCharCode.apply(null, u8.subarray(i, i + n)); return btoa(s); }
+function deliver(name, mime, bytes, share) {
+  try {
+    if (window.AndroidBridge && window.AndroidBridge.saveFile) { window.AndroidBridge.saveFile(name, mime, toB64(bytes), !!share); return; }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    toast('Saved: ' + name);
+  } catch (e) { toast('Could not save the file.'); }
+}
+function saveReport(fmt, share) {
+  var M = S.modal, rep = buildReport(M.list !== false);
+  if (!rep.courses.length) { toast('No tracked courses to report.'); return; }
+  var pdf = fmt === 'pdf';
+  deliver('attendance-report-' + todayS() + (pdf ? '.pdf' : '.xlsx'), pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', pdf ? ttPdf(rep) : ttXlsx(rep), share);
+}
+
+/* ----- phone reminders + widget (Android app only) ----- */
+function hasNative() { return !!(window.AndroidBridge && window.AndroidBridge.sync); }
+function epochAt(d, hhmm) { var a = hhmm.split(':'), x = pd(d); x.setHours(+a[0], +a[1], 0, 0); return x.getTime(); }
+function endHHMM(t) { var m = /(\d{1,2}):(\d{2})/.exec(tparts(t)[1] || ''); if (!m) return null; var hh = +m[1]; if (hh < 8) hh += 12; return pad(hh) + ':' + m[2]; }
+function buildSync() {
+  var now = Date.now(), T = todayS(), horizon = addD(T, 14), out = { v: 1, now: now, rem: S.rem, classes: [], tasks: [], days: [] };
+  if (S.rem.cls) R.all.forEach(function (x) {
+    if (x.st || !tracked(x.c) || x.d < T || x.d > horizon) return;
+    var e = endHHMM(x.t); if (!e) return;
+    var at = epochAt(x.d, e); if (at <= now) return;
+    out.classes.push({ key: x.key, at: at, title: 'Did you attend ' + co(x.c).name + '?', text: fmtShort(x.d) + ' · ' + x.t });
+  });
+  if (S.rem.due) S.plans.forEach(function (p) {
+    if (p.k !== 'task' || p.x) return;
+    var at = epochAt(addD(p.d, -1), S.rem.at || '18:00');
+    if (at <= now || p.d > addD(T, 30)) return;
+    out.tasks.push({ id: p.id, at: at, title: 'Due tomorrow: ' + p.t, text: (p.c && S.courses[p.c] ? co(p.c).name + ' · ' : '') + (p.ts ? 'Due ' + fmt12(p.ts) : 'Due ' + fmtShort(p.d)) });
+  });
+  for (var i = 0; i < 8; i++) {
+    var d = addD(T, i), cl = [], due = [];
+    (R.byDate[d] || []).forEach(function (x) { if (x.st === 'X' || !tracked(x.c)) return; cl.push(tparts(x.t)[0] + '  ' + co(x.c).name + (x.st === 'A' || x.st === 'C' ? '  ✓' : x.st === 'M' ? '  ✗' : '')); });
+    (R.plByDate[d] || []).forEach(function (it) { if (it.p.k === 'event') cl.push((it.p.ts ? fmt12(it.p.ts).replace(' ', '') : 'All day') + '  ' + it.p.t); });
+    S.plans.forEach(function (p) { if (p.k === 'task' && !p.x && (p.d === d || (i === 0 && p.d < T))) due.push((p.d < T ? 'Overdue · ' : '') + p.t + (p.ts && p.d === d ? ' · ' + fmt12(p.ts) : '')); });
+    out.days.push({ d: d, label: fmtLong(d).replace(/^(\w{3})\w*,/, '$1,').replace(/\s\d{4}$/, ''), classes: cl.slice(0, 7), due: due.slice(0, 5) });
+  }
+  return out;
+}
+var syncT = null, lastSync = '';
+function syncNative() {
+  if (!hasNative() || !S.loaded) return;
+  clearTimeout(syncT);
+  syncT = setTimeout(function () {
+    try { var s = JSON.stringify(buildSync()).replace(/"now":\d+,/, ''); if (s === lastSync) return; lastSync = s; window.AndroidBridge.sync(JSON.stringify(buildSync())); } catch (e) {}
+  }, 500);
+}
+function takePending() {
+  var B = window.AndroidBridge; if (!B || !B.takePending || !S.loaded) return;
+  var arr = [];
+  try { arr = JSON.parse(B.takePending() || '[]'); } catch (e) { return; }
+  var yms = {}, n = 0;
+  arr.forEach(function (it) {
+    if (!it || !/^\d{8}-/.test(it.key) || ['A', 'M', 'C'].indexOf(it.st) < 0) return;
+    var ym = ymOfKey(it.key); (S.marks[ym] || (S.marks[ym] = {}))[it.key] = it.st; yms[ym] = 1; n++;
+  });
+  if (!n) return;
+  Object.keys(yms).forEach(function (ym) { save('mk:' + ym); });
+  render(); toast(n + (n === 1 ? ' class' : ' classes') + ' marked from your notifications');
+}
+window.__pending = takePending;
+function setRem(k, v) {
+  S.rem[k] = v; save('pf');
+  if ((k === 'cls' || k === 'due') && v && window.AndroidBridge && window.AndroidBridge.requestNotifications) window.AndroidBridge.requestNotifications();
+  lastSync = ''; render();
+}
+
 /* ----- modal ----- */
 function planForm(M) {
   var f = M.f, isTask = f.k === 'task';
   var typeSeg = h('div', { class: 'vseg', role: 'group', 'aria-label': 'Type' });
-  [['task', 'Assignment'], ['event', 'Event']].forEach(function (t) {
+  [['task', 'Assignment'], ['event', 'Event']].concat(M.edit ? [] : [['class', 'Class']]).forEach(function (t) {
     typeSeg.append(h('button', { type: 'button', 'aria-pressed': f.k === t[0] ? 'true' : 'false', onclick: function () { f.k = t[0]; render(); } }, t[1]));
   });
   var courseOpts = [h('option', { value: '' }, 'None')];
   Object.keys(S.courses).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); }).forEach(function (ck) {
     courseOpts.push(h('option', { value: ck, selected: f.c === ck ? true : null }, co(ck).code + ' · ' + co(ck).name));
   });
+  if (f.k === 'class') {
+    var copts = [h('option', { value: '' }, 'Choose a subject')];
+    Object.keys(S.courses).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); }).forEach(function (ck) { copts.push(h('option', { value: ck, selected: f.c === ck ? true : null }, co(ck).name + ' (' + co(ck).code + ')')); });
+    var sopts = [h('option', { value: '' }, 'Choose a time')].concat(SLOT_L.map(function (l, i) { return h('option', { value: String(i), selected: String(f.s) === String(i) ? true : null }, l); }));
+    return [
+      h('h2', { id: 'mt' }, 'Add to my plans'),
+      M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
+      typeSeg,
+      h('p', { class: 'hint', style: 'margin:0' }, 'A one-off class, for example a make-up or an extra session. It counts for attendance like any other class.'),
+      h('div', { class: 'field' }, h('label', { for: 'f-c' }, 'Subject'), h('select', { id: 'f-c', 'data-fk': 'f-c', onchange: function (e) { f.c = e.target.value; } }, copts)),
+      h('div', { class: 'row2' },
+        h('div', { class: 'field' }, h('label', { for: 'f-d' }, 'Date'), h('input', { id: 'f-d', type: 'date', value: f.d || '', 'data-fk': 'f-d', oninput: function (e) { f.d = e.target.value; } })),
+        h('div', { class: 'field' }, h('label', { for: 'f-s' }, 'Time'), h('select', { id: 'f-s', 'data-fk': 'f-s', onchange: function (e) { f.s = e.target.value; } }, sopts))),
+      h('div', { class: 'actions' }, h('span', { class: 'spacer' }),
+        h('button', { type: 'button', class: 'btn', onclick: function () { S.modal = null; render(); } }, 'Cancel'),
+        h('button', { type: 'button', class: 'btn pri', onclick: savePlan }, 'Add class'))
+    ];
+  }
   var inp = function (id, type, key, extra) { return h('input', Object.assign({ id: id, type: type, value: f[key] || '', 'data-fk': id, oninput: function (e) { f[key] = e.target.value; } }, extra || {})); };
   return [
-    h('h2', { id: 'mt' }, M.edit ? 'Edit ' + (isTask ? 'assignment' : 'event') : 'Add to my plans'),
+    h('h2', { id: 'mt' }, M.edit ? 'Edit ' + (isTask ? 'assignment' : f.rp ? 'repeating event' : 'event') : 'Add to my plans'),
+    M.quick && !M.edit ? h('p', { class: 'hint', style: 'margin:0' }, 'This is what I understood. Check it, change anything, then add it.') : null,
     M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
     typeSeg,
     h('div', { class: 'field' }, h('label', { for: 'f-t' }, isTask ? 'Assignment' : 'Event'), inp('f-t', 'text', 't', { maxlength: '120', placeholder: isTask ? 'e.g. FM case write-up' : 'e.g. Study group' })),
     h('div', { class: 'row2' },
       h('div', { class: 'field' }, h('label', { for: 'f-d' }, isTask ? 'Due date' : 'Starts on'), inp('f-d', 'date', 'd')),
       isTask ? h('div', { class: 'field' }, h('label', { for: 'f-ts' }, 'Due time ', h('span', { class: 'opt' }, '(optional)')), inp('f-ts', 'time', 'ts'))
+             : f.rp ? h('div', { class: 'field' }, h('label', { for: 'f-ru' }, 'Repeat until ', h('span', { class: 'opt' }, '(blank = 26 weeks)')), inp('f-ru', 'date', 'ru'))
              : h('div', { class: 'field' }, h('label', { for: 'f-e' }, 'Ends on ', h('span', { class: 'opt' }, '(optional)')), inp('f-e', 'date', 'e'))),
+    isTask ? null : h('div', { class: 'field' }, h('label', { for: 'f-rp' }, 'Repeat'),
+      h('select', { id: 'f-rp', 'data-fk': 'f-rp', onchange: function (e) { f.rp = e.target.value; if (f.rp) f.e = ''; render(); } },
+        [['', 'Does not repeat'], ['w', 'Every week, same day'], ['wd', 'Every weekday (Mon to Fri)'], ['d', 'Every day']].map(function (o) { return h('option', { value: o[0], selected: (f.rp || '') === o[0] ? true : null }, o[1]); }))),
     isTask ? null : h('div', { class: 'row2' },
       h('div', { class: 'field' }, h('label', { for: 'f-ts' }, 'Start time ', h('span', { class: 'opt' }, '(optional)')), inp('f-ts', 'time', 'ts')),
       h('div', { class: 'field' }, h('label', { for: 'f-te' }, 'End time ', h('span', { class: 'opt' }, '(optional)')), inp('f-te', 'time', 'te'))),
@@ -1179,10 +1486,61 @@ function modal() {
   if (!M) return null;
   var close = function () { S.modal = null; render(); };
   var body;
+  var mvForm = function () {
+    var f = M.f, c = co(M.c);
+    var sopts = SLOT_L.map(function (l, i) { return h('option', { value: String(i), selected: String(f.s) === String(i) ? true : null }, l); });
+    return [
+      h('h2', { id: 'mt' }, M.extra ? 'Edit one-off class' : 'Reschedule this class'),
+      h('p', null, h('b', null, c.name), ' · ' + (M.extra ? 'one-off class' : 'originally ' + fmtShort(M.from.d) + ', ' + SLOT_L[M.from.s])),
+      M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
+      h('div', { class: 'row2' },
+        h('div', { class: 'field' }, h('label', { for: 'm-d' }, 'New date'), h('input', { id: 'm-d', type: 'date', value: f.d || '', 'data-fk': 'm-d', oninput: function (e) { f.d = e.target.value; } })),
+        h('div', { class: 'field' }, h('label', { for: 'm-s' }, 'New time'), h('select', { id: 'm-s', 'data-fk': 'm-s', onchange: function (e) { f.s = e.target.value; } }, sopts))),
+      h('p', { class: 'hint', style: 'margin:0' }, 'Only this one class moves. Anything you have already marked stays with it, and the rest of the timetable is untouched.'),
+      h('div', { class: 'actions' },
+        M.extra ? (M.confirmDel
+          ? [h('button', { type: 'button', class: 'btn danger', onclick: deleteExtra }, 'Yes, remove'), h('button', { type: 'button', class: 'btn', onclick: function () { M.confirmDel = false; render(); } }, 'Keep it')]
+          : h('button', { type: 'button', class: 'btn danger', onclick: function () { M.confirmDel = true; render(); } }, 'Remove class'))
+          : (M.isMoved ? h('button', { type: 'button', class: 'btn', onclick: restoreMove }, 'Back to original') : null),
+        h('span', { class: 'spacer' }),
+        h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'),
+        h('button', { type: 'button', class: 'btn pri', onclick: saveMove }, 'Save'))
+    ];
+  };
+  var repForm = function () {
+    var cnt = Object.keys(R.byCourse).filter(tracked).length;
+    return [
+      h('h2', { id: 'mt' }, 'Attendance report'),
+      h('p', null, 'A summary of every tracked course (held, attended, condonation, missed, percentage), for a condonation application or your own records. Cancelled classes are not counted.'),
+      h('div', { class: 'row2' },
+        h('div', { class: 'field' }, h('label', { for: 'r-n' }, 'Your name ', h('span', { class: 'opt' }, '(optional)')), h('input', { id: 'r-n', type: 'text', maxlength: '60', value: S.profile.name || '', 'data-fk': 'r-n', oninput: function (e) { S.profile.name = e.target.value; }, onchange: function () { save('pf'); } })),
+        h('div', { class: 'field' }, h('label', { for: 'r-r' }, 'Reg. no ', h('span', { class: 'opt' }, '(optional)')), h('input', { id: 'r-r', type: 'text', maxlength: '30', value: S.profile.reg || '', 'data-fk': 'r-r', oninput: function (e) { S.profile.reg = e.target.value; }, onchange: function () { save('pf'); } }))),
+      h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'r-l', checked: M.list !== false ? true : null, onchange: function (e) { M.list = e.target.checked; } }), 'Include every class, date by date'),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', 'data-fk': 'r-pdf', onclick: function () { saveReport('pdf', false); } }, ic('down'), 'PDF'),
+        h('button', { type: 'button', class: 'btn pri', 'data-fk': 'r-xls', onclick: function () { saveReport('xlsx', false); } }, ic('down'), 'Spreadsheet'),
+        window.AndroidBridge && window.AndroidBridge.saveFile ? [h('button', { type: 'button', class: 'btn', onclick: function () { saveReport('pdf', true); } }, 'Share PDF'), h('button', { type: 'button', class: 'btn', onclick: function () { saveReport('xlsx', true); } }, 'Share spreadsheet')] : null),
+      window.AndroidBridge && window.AndroidBridge.saveFile ? h('p', { class: 'rem-note' }, 'Save puts the file in your Downloads folder.') : null,
+      h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))
+    ];
+  };
   if (M.stage === 'plan') body = planForm(M);
+  else if (M.stage === 'move') body = mvForm();
+  else if (M.stage === 'report') body = repForm();
   else if (M.stage === 'data') {
+    var remBox = hasNative() ? [
+      h('h3', null, 'Reminders'),
+      h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'rem-cls', checked: S.rem.cls ? true : null, onchange: function (e) { setRem('cls', e.target.checked); } }), 'After each class, ask "Did you attend?"'),
+      h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'rem-due', checked: S.rem.due ? true : null, onchange: function (e) { setRem('due', e.target.checked); } }), 'The evening before an assignment is due'),
+      S.rem.due ? h('div', { class: 'field', style: 'max-width:200px' }, h('label', { for: 'rem-at' }, 'Remind me at'), h('input', { id: 'rem-at', type: 'time', value: S.rem.at || '18:00', 'data-fk': 'rem-at', onchange: function (e) { if (e.target.value) setRem('at', e.target.value); } })) : null,
+      h('p', { class: 'rem-note' }, 'The notification has Attended, Missed and Condonation buttons, so you can mark a class without opening the app. Reminders are set for the next two weeks each time you open the app. If none arrive, check that notifications are allowed for Class Planner and that battery saver is not blocking it.'),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn', onclick: function () { try { window.AndroidBridge.testNotification(); } catch (e) {} } }, 'Send a test notification')),
+      h('hr', { class: 'sep' })
+    ] : [h('p', { class: 'rem-note' }, 'Reminders and the home-screen widget are available in the Android app.')];
     body = [
-      h('h2', { id: 'mt' }, 'Backup and restore'),
+      h('h2', { id: 'mt' }, 'Settings'),
+      remBox,
+      h('h3', null, 'Backup and restore'),
       h('p', null, 'Everything in this app is saved only on this phone. If you clear the app\'s data, uninstall it or change phones, it is gone, so save a backup file now and then (and keep it somewhere safe, like Google Drive).'),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn pri', onclick: function () { exportBackup(); } }, ic('down'), 'Save a backup file')),
@@ -1196,7 +1554,7 @@ function modal() {
       h('div', { class: 'warns' }, 'This replaces everything currently in the app: timetable, calendar, attendance and your plans.'),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'apply', onclick: applyRestore }, 'Restore'))];
   }
-  if (M.stage === 'plan' || M.stage === 'data' || M.stage === 'restore') {}
+  if (M.stage === 'plan' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report') {}
   else if (M.stage === 'pick' || M.stage === 'error') {
     body = [
       h('h2', { id: 'mt' }, 'Import'),
@@ -1242,7 +1600,14 @@ function modal() {
 }
 
 /* ---------- render ---------- */
-function render() {
+var rendering = false, rerender = false;
+function render() {          // re-entrancy guard: removing a focused field can fire blur/change handlers that call render again
+  if (rendering) { rerender = true; return; }
+  rendering = true;
+  try { renderNow(); } finally { rendering = false; }
+  if (rerender) { rerender = false; render(); }
+}
+function renderNow() {
   var fk = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-fk');
   var root = $('#app');
   if (!S.loaded) {
@@ -1253,14 +1618,16 @@ function render() {
   if (!S.posSet && R.hasData) { initPos(); S.posSet = true; }
   var foot = h('p', { class: 'foot' }, S.mode === 'db'
     ? 'Your attendance and your own plans are private to your account. The timetable and academic calendar are shared. Open this page on any device to see the same data.'
-    : 'Everything is saved only on this phone. Use Backup (top right) to keep a copy of your data.');
-  root.replaceChildren.apply(root, [header(), h('main', null, S.tab === 'tt' ? ttSection() : attSection()), S.tab === 'tt' ? foot : null, modal()].filter(Boolean));
+    : 'Everything is saved only on this phone. Use Settings (top right) to save a backup copy of your data.');
+  root.replaceChildren.apply(root, [header(), h('main', null, S.tab === 'tt' ? ttSection() : S.tab === 'fc' ? fcSection() : attSection()), S.tab === 'tt' ? foot : null, modal()].filter(Boolean));
+  syncNative();
   if (fk) { var el = root.querySelector('[data-fk="' + fk + '"]'); if (el && !el.disabled) el.focus({ preventScroll: true }); }
   else if (S.modal && (S.modal.stage === 'preview' || S.modal.stage === 'restore')) { var ap = root.querySelector('[data-fk="apply"]'); if (ap) ap.focus(); }
   else if (S.modal && S.modal.stage === 'plan' && !S.modal.focused) { S.modal.focused = true; var ft = root.querySelector('#f-t'); if (ft) ft.focus(); }
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
-document.addEventListener('visibilitychange', function () { if (!document.hidden && S.loaded) render(); });
+document.addEventListener('visibilitychange', function () { if (!document.hidden && S.loaded) { takePending(); render(); } });
+setInterval(function () { if (!document.hidden) takePending(); }, 4000);
 window.__back = function () { if (S.modal) { S.modal = null; render(); return true; } if (S.tab !== 'tt') { setTab('tt'); return true; } return false; };
 window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render };
 

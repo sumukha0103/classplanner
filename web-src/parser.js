@@ -272,11 +272,13 @@ function planCalendar(state, C) {
    or falsy for classes not marked yet. Cancelled classes count for nothing. Percentages are over held classes. */
 const TT_MIN = 85;
 function ttOk(good, n) { return n === 0 || good * 100 >= TT_MIN * n; }   // integer maths: no rounding surprises at exactly 85%
-function ttForecast(list, allowed) {
-  let A = 0, M = 0, C = 0, X = 0, R = 0;
-  list.forEach(x => { if (x.st === 'A') A++; else if (x.st === 'M') M++; else if (x.st === 'C') C++; else if (x.st === 'X') X++; else R++; });
-  const held = A + M + C, good = A + C, n = held + R;
-  const f = { A, M, C, X, R, held, allowed, total: n, pct: held ? good * 100 / held : null,
+function ttForecast(list, allowed, total) {
+  // total = sessions the course has in the whole term (8 per credit). Without it, only the classes listed are used.
+  let A = 0, M = 0, C = 0, X = 0, U = 0;
+  list.forEach(x => { if (x.st === 'A') A++; else if (x.st === 'M') M++; else if (x.st === 'C') C++; else if (x.st === 'X') X++; else U++; });
+  const held = A + M + C, good = A + C;
+  const R = total == null ? U : Math.max(0, total - held), n = held + R;
+  const f = { A, M, C, X, R, held, allowed, sched: U, term: total == null ? held + U : total, total: n, pct: held ? good * 100 / held : null,
               best: n ? (good + R) * 100 / n : null, worst: n ? good * 100 / n : null };
   f.overLimit = M > allowed;
   f.unreachable = !ttOk(good + R, n);              // below 85% even if every remaining class is attended
@@ -288,7 +290,7 @@ function ttForecast(list, allowed) {
   f.low = held > 0 && !ttOk(good, held);
   return f;
 }
-function ttSkip(f) {                               // one class not yet held and not marked
+function ttSkip(f) {                               // one class not yet held and not marked (needs f.R >= 1)
   const good = f.A + f.C, n = f.held + f.R;
   let verdict, why;
   if (f.M + 1 > f.allowed) { verdict = 'bad'; why = 'limit'; }
@@ -299,4 +301,49 @@ function ttSkip(f) {                               // one class not yet held and
            verdict, why, left: f.allowed - f.M - 1 };
 }
 
-if (typeof module !== 'undefined') module.exports = { parseTimetable, planImport, ttSessionKey, ttToISODate, ttParseCell, parseCalendar, planCalendar, ttDetectKind, ttForecast, ttSkip, ttOk };
+/* ---------- quick add: "Study group every Wed 6pm", "FM case due fri 5pm", "Lunch tomorrow 1pm" ---------- */
+const TT_WD = { mon: 0, monday: 0, tue: 1, tues: 1, tuesday: 1, wed: 2, weds: 2, wednesday: 2, thu: 3, thur: 3, thurs: 3, thursday: 3, fri: 4, friday: 4, sat: 5, saturday: 5, sun: 6, sunday: 6 };
+const TT_MN = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+function ttPad(n) { return String(n).padStart(2, '0'); }
+function ttIso(d) { return d.getFullYear() + '-' + ttPad(d.getMonth() + 1) + '-' + ttPad(d.getDate()); }
+function ttAdd(s, n) { const a = s.split('-').map(Number), d = new Date(a[0], a[1] - 1, a[2] + n); return ttIso(d); }
+function ttWdIdx(s) { const a = s.split('-').map(Number); return (new Date(a[0], a[1] - 1, a[2]).getDay() + 6) % 7; }
+function ttNextWd(today, idx, strict) { let d = today; if (strict) d = ttAdd(d, 1); for (let i = 0; i < 7 && ttWdIdx(d) !== idx; i++) d = ttAdd(d, 1); return d; }
+function ttQuickParse(text, today) {
+  let s = ' ' + String(text || '').trim() + ' ';
+  const out = { k: 'event', t: '', d: today, ts: '', rp: '', found: [] };
+  const take = (re, fn) => { const m = re.exec(s); if (!m) return false; s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); fn(m); return true; };
+  let wdWord = null, strict = false, explicitDate = null;
+  if (take(/\b(?:due|deadline)\b/i, () => { out.k = 'task'; })) out.found.push('due');
+  if (/\b(assignment|homework|submit|submission)\b/i.test(s)) out.k = 'task';
+  take(/\bevery\s+(day|weekday|weekdays|week|mon|monday|tue|tues|tuesday|wed|weds|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday|sun|sunday)\b/i, m => {
+    const w = m[1].toLowerCase();
+    if (w === 'day') out.rp = 'd'; else if (w === 'weekday' || w === 'weekdays') out.rp = 'wd'; else if (w === 'week') out.rp = 'w';
+    else { out.rp = 'w'; wdWord = TT_WD[w]; }
+    out.found.push('repeat');
+  });
+  if (!out.rp) take(/\bdaily\b/i, () => { out.rp = 'd'; out.found.push('repeat'); });
+  if (!out.rp) take(/\bweekly\b/i, () => { out.rp = 'w'; out.found.push('repeat'); });
+  // time
+  if (!take(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i, m => {
+    let hh = +m[1] % 12; if (/pm/i.test(m[3])) hh += 12; out.ts = ttPad(hh) + ':' + (m[2] || '00'); out.found.push('time');
+  })) take(/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/, m => { out.ts = ttPad(+m[1]) + ':' + m[2]; out.found.push('time'); });
+  // date
+  if (take(/\b(today|tonight)\b/i, () => { explicitDate = today; })) out.found.push('date');
+  else if (take(/\btomorrow\b/i, () => { explicitDate = ttAdd(today, 1); })) out.found.push('date');
+  else if (take(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*\b/i, m => { explicitDate = ttMD(today, TT_MN[m[2].toLowerCase()], +m[1]); })) out.found.push('date');
+  else if (take(/\b(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?\b/i, m => { explicitDate = ttMD(today, TT_MN[m[1].toLowerCase()], +m[2]); })) out.found.push('date');
+  else if (take(/\b(\d{1,2})[\/\-](\d{1,2})\b/, m => { explicitDate = ttMD(today, +m[2] - 1, +m[1]); })) out.found.push('date');
+  else if (wdWord == null && take(/\b(next\s+)?(mon|monday|tue|tues|tuesday|wed|weds|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday|sun|sunday)\b/i, m => { wdWord = TT_WD[m[2].toLowerCase()]; strict = !!m[1]; })) out.found.push('date');
+  if (explicitDate) out.d = explicitDate; else if (wdWord != null) out.d = ttNextWd(today, wdWord, strict);
+  if (out.k === 'task') out.rp = '';
+  out.t = s.replace(/\b(on|at|by|from|every|for)\b\s*$/i, ' ').replace(/^\s*\b(on|at|by|from|every|for)\b/i, ' ').replace(/[,;:\-–]+\s*$/, ' ').replace(/\s+/g, ' ').trim();
+  return out;
+}
+function ttMD(today, month, day) {
+  const y = +today.slice(0, 4); let d = new Date(y, month, day);
+  if (ttIso(d) < today) d = new Date(y + 1, month, day);
+  return ttIso(d);
+}
+
+if (typeof module !== 'undefined') module.exports = { parseTimetable, planImport, ttSessionKey, ttToISODate, ttParseCell, parseCalendar, planCalendar, ttDetectKind, ttForecast, ttSkip, ttOk, ttQuickParse, ttAdd, ttWdIdx, ttIso };

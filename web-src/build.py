@@ -3,6 +3,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def rd(n): return open(os.path.join(HERE, n), encoding='utf-8').read()
 t = rd('app.template.html')
 p = rd('parser.js')
+p += '\n' + rd('export.js')
 # drop the node-only export line
 p = "\n".join(l for l in p.split("\n") if not l.startswith("if (typeof module"))
 assert '/*PARSER*/' in t
