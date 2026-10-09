@@ -1723,8 +1723,8 @@ function onbSteps() {
   if (S.canImport) st.push({ id: 'cal', opt: true, done: hasCal(), t: 'Add the academic calendar', d: 'Optional. Brings holidays and exam dates, and the exam countdown.', b: 'Import', fn: function () { S.modal = { stage: 'pick' }; render(); } });
   if (hasNative()) st.push({ id: 'rem', done: !!(S.rem.cls || S.rem.due), t: 'Turn on reminders', d: 'A notification after each class with Attended, Missed and Condonation buttons, so marking takes one tap.', b: 'Turn on', fn: function () { setRem('cls', true); } });
   if (nativeCloud()) {
-    st.push({ id: 'bk', done: !!S.drive.on, t: 'Back up to Google Drive every day', d: 'Choose your Google account and folder once. A fresh encrypted copy is saved there each night.', b: 'Set up', fn: function () { openCloud(); } });
-    st.push({ id: 'sy', opt: true, done: !!S.sync.on, t: 'Keep two phones in sync', d: 'Optional. Share one encrypted file on Drive between your phones.', b: 'Set up', fn: function () { openCloud(); } });
+    st.push({ id: 'bk', done: !!S.drive.on, t: 'Back up to Google Drive every day', d: 'Choose your Google account and folder once. A fresh copy is saved there each night.', b: 'Set up', fn: function () { openCloud(); } });
+    st.push({ id: 'sy', opt: true, done: !!S.sync.on, t: 'Keep two phones in sync', d: 'Optional. Share one file on Drive between your phones.', b: 'Set up', fn: function () { openCloud(); } });
   }
   return st;
 }
@@ -1785,7 +1785,7 @@ function guideForm(M) {
       h('button', { type: 'button', class: 'btn', onclick: function () { sampleFile('calendar'); } }, ic('down'), 'Sample calendar')),
     S.mode === 'local' ? [
       h('h3', null, '3. Your data'),
-      h('p', null, 'Everything is stored on this phone only. ' + (nativeCloud() ? 'To protect it, the checklist helps you set up an encrypted daily backup to your own Google Drive.' : 'Save a backup from Settings now and then.'))] : null,
+      h('p', null, 'Everything is stored on this phone only. ' + (nativeCloud() ? 'To protect it, the checklist helps you set up a daily backup to your own Google Drive.' : 'Save a backup from Settings now and then.'))] : null,
     h('div', { class: 'actions' },
       S.canImport ? h('button', { type: 'button', class: 'btn', onclick: function () { S.onb.guideSeen = true; saveDev(); S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import my timetable') : null,
       h('span', { class: 'spacer' }),
@@ -1827,8 +1827,8 @@ function coursesForm(M, close) {
   ];
 }
 
-/* ----- Google Drive backup + encrypted sync (Android app; the file picker is the only door to Drive) ----- */
-var DRV_NAME = 'ClassPlanner-backup.cpbackup', SYNC_NAME = 'ClassPlanner-sync.cpsync';
+/* ----- Google Drive backup + sync (Android app; the file picker is the only door to Drive) ----- */
+var DRV_NAME = 'ClassPlanner-backup.json', SYNC_NAME = 'ClassPlanner-sync.json';
 var cbs = {}, cbN = 0;
 function bridgeAsync(method) {
   var B = window.AndroidBridge, args = Array.prototype.slice.call(arguments, 1);
@@ -1848,7 +1848,7 @@ function whenText(v) {
 }
 function openCloud() { S.modal = { stage: 'cloud', p1: '', p2: '', err: '', editPass: false, show: false, confirmReplace: false }; render(); }
 function pickTarget(kind, mode) {
-  try { window.AndroidBridge.pickTarget(kind, mode, kind === 'backup' ? DRV_NAME : SYNC_NAME, 'application/octet-stream'); }
+  try { window.AndroidBridge.pickTarget(kind, mode, kind === 'backup' ? DRV_NAME : SYNC_NAME, 'application/json'); }
   catch (e) { toast('Could not open the file picker.'); }
 }
 window.__picked = function (kind, ok) {
@@ -1863,30 +1863,16 @@ window.__picked = function (kind, ok) {
   }
   render();
 };
-async function savePass() {
-  var M = S.modal; M.err = '';
-  if (!ttCanEncrypt()) M.err = 'Encryption is not available on this phone, so Drive backup and sync cannot be used.';
-  else if ((M.p1 || '').length < 8) M.err = 'Use at least 8 characters.';
-  else if (M.p1 !== M.p2) M.err = 'The two entries do not match.';
-  if (M.err) { render(); return; }
-  var changed = !!S.pass && S.pass !== M.p1;
-  S.pass = M.p1; M.p1 = M.p2 = ''; M.editPass = false; saveDev();
-  stagedVer = -1; if (S.sync.on) { S.sync.err = ''; syncedVer = -1; }
-  toast(changed ? 'Passphrase changed. Use the same one on your other phones.' : 'Passphrase saved');
-  if (S.drive.on) stageNow();
-  render();
-}
 var stageT = null, stagedVer = -1;
 function maybeStage() {
-  if (!nativeCloud() || !S.drive.on || !S.pass || S.mode !== 'local' || !S.loaded || !hasAnyData() || stagedVer === dataVer) return;
+  if (!nativeCloud() || !S.drive.on || S.mode !== 'local' || !S.loaded || !hasAnyData() || stagedVer === dataVer) return;
   clearTimeout(stageT); stageT = setTimeout(stageNow, 3000);
 }
 async function stageNow() {
-  if (!S.pass || !hasAnyData()) return false;
+  if (!hasAnyData()) return false;
   var ver = dataVer;
   try {
-    var enc = await ttEncrypt(new TextEncoder().encode(JSON.stringify(backupObj())), S.pass);
-    window.AndroidBridge.stageBackup(ttB64(enc));
+    window.AndroidBridge.stageBackup(ttB64(new TextEncoder().encode(JSON.stringify(backupObj()))));
     stagedVer = ver; return true;
   } catch (e) { return false; }
 }
@@ -1915,13 +1901,13 @@ function driveState() {      // merge in what the nightly job did while the app 
 var syncing = false, syncedVer = -1, syncT2 = null, SNAPKEY = 'cp-syncundo';
 function newRev() { return ttB64(crypto.getRandomValues(new Uint8Array(9))); }
 function maybeSync() {
-  if (!nativeCloud() || !S.sync.on || !S.pass || !S.loaded || S.mode !== 'local' || syncing || syncedVer === dataVer) return;
+  if (!nativeCloud() || !S.sync.on || !S.loaded || S.mode !== 'local' || syncing || syncedVer === dataVer) return;
   clearTimeout(syncT2); syncT2 = setTimeout(function () { syncNow(false); }, syncedVer === -1 ? 1500 : 20000);
 }
 function syncFail(msg) { S.sync.err = msg; saveDev(); }
 function syncErrText(e) {
   var m = e && e.message;
-  if (m === 'wrong-pass') return 'wrong-pass';
+  if (m === 'old-enc') return 'This sync file was made by an older version that used a passphrase. Turn sync off here, then create a new sync file.';
   if (m === 'not-ours') return 'That file is not a Class Planner sync file.';
   return m || 'Sync failed';
 }
@@ -1929,17 +1915,18 @@ async function readRemote() {
   var raw = await bridgeAsync('readTarget', 'sync');
   if (String(raw).indexOf('ERR:') === 0) throw new Error(String(raw).slice(4));
   if (!raw) return null;
-  var plain;
-  try { plain = await ttDecrypt(ttFromB64(raw), S.pass); }
-  catch (e) { throw new Error(e.message === 'not-encrypted' ? 'not-ours' : e.message === 'bad-pass' ? 'wrong-pass' : e.message); }
-  var o = JSON.parse(new TextDecoder().decode(plain));
+  var o;
+  try {
+    var bytes = ttFromB64(raw);
+    if (ttIsEnc(bytes)) throw new Error('old-enc');
+    o = JSON.parse(new TextDecoder().decode(bytes));
+  } catch (e) { throw new Error(e.message === 'old-enc' ? 'old-enc' : 'not-ours'); }
   if (!o || o.app !== 'class-planner-sync' || !o.data) throw new Error('not-ours');
   return o;
 }
 async function pushData(local, lh) {
   var rev = newRev(), obj = { app: 'class-planner-sync', v: 1, rev: rev, at: new Date().toISOString(), data: local };
-  var enc = await ttEncrypt(new TextEncoder().encode(JSON.stringify(obj)), S.pass);
-  var r = await bridgeAsync('writeTarget', 'sync', ttB64(enc));
+  var r = await bridgeAsync('writeTarget', 'sync', ttB64(new TextEncoder().encode(JSON.stringify(obj))));
   if (r !== 'ok') throw new Error(String(r).replace(/^ERR:/, ''));
   S.sync.rev = rev; S.sync.base = lh;
   try { var back = await readRemote(); if (!back || back.rev !== rev) S.sync.base = ''; } catch (e) { S.sync.base = ''; }   // someone else wrote at the same time (or Drive is slow): look again next time
@@ -1960,7 +1947,6 @@ function pullData(remote) {
 }
 async function syncNow(manual) {
   if (syncing || !nativeCloud() || !S.sync.on) return;
-  if (!S.pass) { syncFail('Set a passphrase first.'); render(); return; }
   syncing = true; S.sync.busy = true; if (S.modal && S.modal.stage === 'cloud') render();
   var ver = dataVer, note = '';
   try {
@@ -1974,7 +1960,7 @@ async function syncNow(manual) {
     if (note === 'conflict') syncedVer = ver;
     saveDev();
     if (manual) toast(note === 'pushed' ? 'Sent this phone\'s changes' : note === 'pulled' ? 'Updated from your other phone' : note === 'conflict' ? 'Both phones changed. Choose what to keep.' : 'Already up to date');
-  } catch (e) { syncedVer = dataVer; S.sync.err = syncErrText(e); saveDev(); if (manual && S.sync.err !== 'wrong-pass') toast('Sync failed: ' + S.sync.err); }
+  } catch (e) { syncedVer = dataVer; S.sync.err = syncErrText(e); saveDev(); if (manual && 1) toast('Sync failed: ' + S.sync.err); }
   syncing = false; S.sync.busy = false; render();
 }
 async function resolveConflict(choice) {
@@ -1992,41 +1978,17 @@ async function resolveConflict(choice) {
   } catch (e) { syncedVer = dataVer; S.sync.err = syncErrText(e); saveDev(); toast('Sync failed: ' + S.sync.err); }
   syncing = false; S.sync.busy = false; render();
 }
-async function replaceRemote() {          // forgot / changed passphrase: overwrite the shared file with this phone's data
-  var M = S.modal; if (M) M.confirmReplace = false;
-  syncing = true; S.sync.busy = true; render();
-  try { var d = syncData(); await pushData(d, ttHash(ttStable(d))); S.sync.at = new Date().toISOString(); S.sync.err = ''; syncedVer = dataVer; saveDev(); toast('Sync file replaced'); }
-  catch (e) { S.sync.err = syncErrText(e); saveDev(); toast('Failed: ' + S.sync.err); }
-  syncing = false; S.sync.busy = false; render();
-}
 function stopSync() {
   try { window.AndroidBridge.clearTarget('sync'); } catch (e) {}
   S.sync = { on: false, rev: '', base: '', at: '', err: '' }; saveDev(); render(); toast('Sync is off. Your data on this phone is unchanged.');
 }
 function cloudForm(M, close) {
-  var cloud = nativeCloud(), hasPass = !!S.pass, out = [h('h2', { id: 'mt' }, 'Backup and sync')];
-  var ppf = function (idn, label, key) {
-    return h('div', { class: 'field' }, h('label', { for: idn }, label),
-      h('input', { id: idn, type: M.show ? 'text' : 'password', value: M[key] || '', autocomplete: 'new-password', 'data-fk': idn, oninput: function (e) { M[key] = e.target.value; } }));
-  };
-  out.push(h('p', null, 'Your Drive files are encrypted on this phone before they leave it, so Google and anyone else who sees the files cannot read them. The passphrase is the key.'));
-  if (!hasPass || M.editPass) {
-    out.push(h('h3', null, hasPass ? 'Change passphrase' : '1. Choose a passphrase'),
-      ppf('pp1', 'Passphrase (8 or more characters)', 'p1'), ppf('pp2', 'Type it again', 'p2'),
-      h('label', { class: 'tgrow' }, h('input', { type: 'checkbox', 'data-fk': 'pp-show', checked: M.show ? true : null, onchange: function (e) { M.show = e.target.checked; render(); } }), 'Show what I type'),
-      h('div', { class: 'warns' }, 'Write it down somewhere safe. It cannot be recovered: if you lose it, your Drive backup and sync file can never be opened. It is also needed on every phone you sync. It is kept on this phone only.'),
-      M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
-      h('div', { class: 'actions', style: 'justify-content:flex-start' },
-        h('button', { type: 'button', class: 'btn pri', 'data-fk': 'pp-save', onclick: savePass }, 'Save passphrase'),
-        hasPass ? h('button', { type: 'button', class: 'btn', onclick: function () { M.editPass = false; M.err = ''; render(); } }, 'Cancel') : null));
-  } else {
-    out.push(h('h3', null, '1. Passphrase'), h('div', { class: 'okrow' }, h('span', null, '✓ Passphrase is set on this phone'), h('button', { type: 'button', class: 'btn sm', onclick: function () { M.editPass = true; render(); } }, 'Change')));
-  }
-  out.push(h('hr', { class: 'sep' }), h('h3', null, '2. Daily backup to Google Drive'));
+  var cloud = nativeCloud(), out = [h('h2', { id: 'mt' }, 'Backup and sync')];
+  out.push(h('p', { class: 'rem-note' }, 'Files are saved to your own Google Drive as ordinary readable files. Anyone who can open that Drive account, or a link you share, can read them. Do not share the sync file with people you do not trust.'));
+  out.push(h('h3', null, '1. Daily backup to Google Drive'));
   if (!cloud) out.push(h('p', null, 'Daily backup is available in the Android app.'));
-  else if (!hasPass) out.push(h('p', { class: 'rem-note' }, 'Set a passphrase first.'));
   else if (!S.drive.on) {
-    out.push(h('p', null, 'Every night about 10 pm, the app saves one encrypted file (' + DRV_NAME + ') to Drive, replacing the previous night\'s. It contains your whole timetable, attendance, plans and settings.'),
+    out.push(h('p', null, 'Every night about 10 pm, the app saves one file (' + DRV_NAME + ') to Drive, replacing the previous night\'s. It contains your whole timetable, attendance, plans and settings.'),
       h('ol', { class: 'steps' },
         h('li', null, 'Tap the button below. Your phone\'s file screen opens.'),
         h('li', null, 'Open the menu (☰) and choose ', h('b', null, 'Drive'), '. Pick the ', h('b', null, 'Google account'), ' you want to use, then a folder.'),
@@ -2045,12 +2007,11 @@ function cloudForm(M, close) {
         h('button', { type: 'button', class: 'btn', onclick: stopDrive }, 'Turn off')),
       h('p', { class: 'rem-note' }, 'To restore on a new phone, install the app, then use "Restore from a backup file" and pick this file from Drive.'));
   }
-  out.push(h('hr', { class: 'sep' }), h('h3', null, '3. Sync between phones (optional)'));
+  out.push(h('hr', { class: 'sep' }), h('h3', null, '2. Sync between phones (optional)'));
   if (!cloud) out.push(h('p', null, 'Sync is available in the Android app.'));
-  else if (!hasPass) out.push(h('p', { class: 'rem-note' }, 'Set a passphrase first.'));
   else if (!S.sync.on) {
-    out.push(h('p', null, 'Keep two phones showing the same timetable, attendance and plans through one encrypted file on Drive.'),
-      h('p', { class: 'rem-note' }, 'First phone: create the sync file. Other phone: set the same passphrase, then join and pick that same file. Both phones need to see the file in Drive (same Google account, or share the file with the other account and give it edit access).'),
+    out.push(h('p', null, 'Keep two phones showing the same timetable, attendance and plans through one file on Drive.'),
+      h('p', { class: 'rem-note' }, 'First phone: create the sync file. Other phone: tap Join and pick that same file. Both phones need to see the file in Drive (same Google account, or share the file with the other account and give it edit access).'),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn pri', 'data-fk': 'sy-new', onclick: function () { pickTarget('sync', 'create'); } }, 'Create the sync file'),
         h('button', { type: 'button', class: 'btn', 'data-fk': 'sy-join', onclick: function () { pickTarget('sync', 'open'); } }, 'Join an existing sync file')));
@@ -2059,10 +2020,7 @@ function cloudForm(M, close) {
     out.push(h('div', { class: 'okrow' }, h('span', null, '✓ Sync is on')),
       h('p', { class: 'rem-note', style: 'margin:0' }, (si.name || SYNC_NAME) + ' · ' + (si.drive ? 'Google Drive' : si.set ? 'Not Google Drive' : 'Location lost')),
       S.sync.at ? h('p', { class: 'rem-note', style: 'margin:0' }, 'Last synced ' + whenText(S.sync.at)) : null,
-      e === 'wrong-pass' ? h('div', { class: 'warns' }, 'This passphrase does not open the sync file. If you changed it on your other phone, use that one here (Change). If the old one is lost, you can replace the file with this phone\'s data.') : e ? h('div', { class: 'warns' }, e) : null,
-      e === 'wrong-pass' ? (M.confirmReplace
-        ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn danger', onclick: replaceRemote }, 'Yes, replace the sync file'), h('button', { type: 'button', class: 'btn', onclick: function () { M.confirmReplace = false; render(); } }, 'Cancel'))
-        : h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn', onclick: function () { M.confirmReplace = true; render(); } }, 'Replace the sync file with this phone\'s data'))) : null,
+      e ? h('div', { class: 'warns' }, e) : null,
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn pri', disabled: S.sync.busy ? true : null, 'data-fk': 'sy-now', onclick: function () { syncNow(true); } }, S.sync.busy ? 'Syncing…' : 'Sync now'),
         hasSyncUndo() ? h('button', { type: 'button', class: 'btn', onclick: undoSync }, 'Undo last sync') : null,
@@ -2093,7 +2051,7 @@ function conflictForm(M) {
 function unlockForm(M, close) {
   return [
     h('h2', { id: 'mt' }, 'This backup is encrypted'),
-    h('p', null, 'Type the passphrase you chose when you set up Drive backup.'),
+    h('p', null, 'It was made by an older version of the app with a passphrase. Type that passphrase to open it.'),
     h('div', { class: 'field' }, h('label', { for: 'ul-p' }, 'Passphrase'), h('input', { id: 'ul-p', type: 'password', value: M.pass || '', autocomplete: 'off', 'data-fk': 'ul-p', oninput: function (e) { M.pass = e.target.value; }, onkeydown: function (e) { if (e.key === 'Enter') unlockRestore(); } })),
     M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
     h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', onclick: unlockRestore }, 'Open'))
@@ -2263,7 +2221,7 @@ function modal() {
       h('hr', { class: 'sep' }),
       remBox,
       nativeCloud() || true ? [h('h3', null, 'Google Drive backup and sync'),
-        h('p', null, nativeCloud() ? (S.drive.on ? 'Daily backup to Drive is on' + (S.sync.on ? ', and sync is on.' : '.') : 'Set up an encrypted daily backup to your Google Drive, and optionally sync two phones.') : 'Daily Drive backup and sync are available in the Android app.'),
+        h('p', null, nativeCloud() ? (S.drive.on ? 'Daily backup to Drive is on' + (S.sync.on ? ', and sync is on.' : '.') : 'Set up a daily backup to your Google Drive, and optionally sync two phones.') : 'Daily Drive backup and sync are available in the Android app.'),
         nativeCloud() ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn pri', 'data-fk': 'open-cloud', onclick: openCloud }, S.drive.on || S.sync.on ? 'Manage backup and sync' : 'Set up')) : null,
         h('hr', { class: 'sep' })] : null,
       h('h3', null, 'Backup and restore'),
@@ -2372,7 +2330,7 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.
 document.addEventListener('visibilitychange', function () { if (!document.hidden && S.loaded) { takePending(); if (S.sync.on) syncedVer = -1; render(); } });
 setInterval(function () { if (!document.hidden) takePending(); }, 4000);
 window.__back = function () { if (S.modal) { S.modal = null; render(); return true; } if (S.tab !== 'tt') { setTab('tt'); return true; } return false; };
-window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render, enc: { ttDecrypt: ttDecrypt, ttFromB64: ttFromB64, ttIsEnc: ttIsEnc } };
+window.__cp = { S: S, handleRows: function (r) { handleRows(r); render(); }, render: render, enc: { ttDecrypt: ttDecrypt, ttEncrypt: ttEncrypt, ttFromB64: ttFromB64, ttB64: ttB64, ttIsEnc: ttIsEnc } };
 
 if (S.theme !== 'system' || S.tsize !== 100) applyLook();
 render();
