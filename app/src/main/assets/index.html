@@ -2059,6 +2059,13 @@ function toB64(u8) { var s = '', n = 0x8000; for (var i = 0; i < u8.length; i +=
 function deliver(name, mime, bytes, share) {
   try {
     if (window.AndroidBridge && window.AndroidBridge.saveFile) { window.AndroidBridge.saveFile(name, mime, toB64(bytes), !!share); return; }
+    if (window.claude && window.claude.use) {       // published web page: ask the viewer to save the file
+      window.claude.use('downloads').then(function (dl) {
+        if (!dl) { toast('Saving files is not available here.'); return; }
+        dl.save({ filename: name, data: bytes }).then(function () { toast('Saved: ' + name); }, function (e) { if (!e || e.code !== 'declined') toast('Could not save the file.'); });
+      });
+      return;
+    }
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([bytes], { type: mime }));
     a.download = name; document.body.appendChild(a); a.click(); a.remove();
