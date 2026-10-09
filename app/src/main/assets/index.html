@@ -303,8 +303,9 @@ textarea{resize:vertical;min-height:70px}
 .swiping{user-select:none;-webkit-user-select:none}
 .dayall{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .ended{background:var(--surface2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted)}
-.arow{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line);padding-block:6px;font-weight:400}
+.arow{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line);padding-block:9px;font-weight:400}
 .arow input{width:22px;height:22px;flex:none}
+.arow>span{display:block;line-height:1.35;min-width:0}
 .arow .t{font-weight:600;color:var(--ink)}.arow .s{font-size:12.5px;color:var(--muted)}
 .banner{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13.5px;font-weight:600}
 .sres{display:flex;flex-direction:column;max-height:min(55vh,420px);overflow:auto}
@@ -385,6 +386,13 @@ textarea{resize:vertical;min-height:70px}
 .crow select{min-height:40px}
 .crow .tr{min-height:40px}
 .okrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600}
+
+.health{display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:10px;font-size:13.5px;font-weight:600;background:var(--surface2);color:var(--muted)}
+.health .hk{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--line);color:var(--ink)}
+.health.ok{background:var(--ok-soft);color:var(--ok)} .health.ok .hk{background:var(--ok);color:var(--fill-ink)}
+.health.warn{background:var(--warn-soft);color:var(--warn)} .health.warn .hk{background:var(--warn);color:var(--fill-ink)}
+.btn.gear{position:relative}
+.gdot{position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#e08a00;border:2px solid var(--surface)}
 </style>
 
 <div id="app" class="wrap"></div>
@@ -1362,7 +1370,7 @@ async function connect() {
     if (window.claude && window.claude.use) { d = await window.claude.use('db'); u = await window.claude.use('user'); }
     if (d && u) uid = await u.id();
   } catch (e) { d = null; }
-  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); loadUndo(); S.loaded = true; if (!S.onb.guideSeen && !Object.keys(S.months).length) S.modal = { stage: 'guide', first: true }; render(); return; }
+  if (!d || !uid) { db = null; S.mode = 'local'; S.canImport = true; loadLocal(); loadUndo(); S.loaded = true; if (!S.onb.guideSeen && !Object.keys(S.months).length) S.modal = { stage: 'guide', first: true }; checkWhatsNew(); render(); return; }
   db = d; S.uid = uid; S.mode = 'db';
   try { S.canImport = !!(await u.canEdit()); } catch (e) { S.canImport = false; }
   var err = function (e) { toast('Sync problem: ' + ((e && e.message) || 'unknown error')); };
@@ -1826,6 +1834,8 @@ function applyImport() {
   var inFile = (M.P && M.P.courses) || {};
   var gone = Object.keys(R.byCourse).filter(function (ck) { return tracked(ck) && !inFile[ck] && finishedCourse(ck); });
   if (gone.length) openArchive(gone);
+  else if (S.roll) { S.roll = false; S.onb.confirmed = false; S.onb.hide = false; saveDev(); openCourses(); }
+  S.roll = false;
 }
 
 /* ---------- components ---------- */
@@ -1903,7 +1913,7 @@ function header() {
     h('div', { class: 'brand' }, h('h1', null, 'Class Planner'), sub && h('p', null, sub)),
     nav, h('span', { class: 'spacer' }),
     h('button', { type: 'button', class: 'btn', 'aria-label': 'Search', onclick: function () { S.modal = { stage: 'search', q: '' }; render(); } }, ic('search'), h('span', { class: 'lbl' }, 'Search')),
-    S.mode === 'local' ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Settings, reminders and backup', onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('gear'), h('span', { class: 'lbl' }, 'Settings')) : null,
+    S.mode === 'local' ? h('button', { type: 'button', class: 'btn gear', 'aria-label': 'Settings, reminders and backup' + ((bkHealth() || {}).lvl === 'warn' ? '. Backup needs attention' : ''), onclick: function () { S.modal = { stage: 'data' }; render(); } }, ic('gear'), h('span', { class: 'lbl' }, 'Settings'), (bkHealth() || {}).lvl === 'warn' ? h('span', { class: 'gdot', 'aria-hidden': 'true' }) : null) : null,
     S.canImport ? h('button', { type: 'button', class: 'btn', 'aria-label': 'Import timetable or calendar', onclick: function () { S.modal = { stage: 'pick' }; render(); } }, ic('up'), h('span', { class: 'lbl' }, 'Import')) : null);
 }
 
@@ -2012,6 +2022,7 @@ function dayPanel(d) {
   var head = h('div', { class: 'dp-head' }, h('h3', null, fmtLong(d)),
     info && cleanType(info.type) ? h('span', { class: 'tag ' + typeClass(info.type) }, cleanType(info.type)) : null,
     h('span', { class: 'spacer' }),
+    h('button', { type: 'button', class: 'btn sm', 'aria-label': 'Share this day as text', 'data-fk': 'share-day', onclick: function () { shareDay(d); } }, ic('up'), 'Share'),
     h('button', { type: 'button', class: 'btn sm', onclick: function () { openPlan(null, d); } }, ic('plus'), 'Add'));
   var body = [];
   var openToday = list.filter(function (x) { return !x.st && tracked(x.c); });
@@ -2200,7 +2211,7 @@ function weekCard() {
 }
 function ttSection() {
   if (!R.hasData) return emptyState();
-  return h('div', null, onbCard(), bkBanner(), countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
+  return h('div', null, onbCard(), rollBanner(), bkBanner(), countdown(), toolbar(), filterRow(), S.view === 'month' ? monthView() : S.view === 'week' ? weekView() : dayView(), quickAdd(), h('div', { class: 'twocol' }, weekCard(), dueCard()), h('div', { style: 'margin-top:16px' }, upCard()));
 }
 
 /* ----- attendance ----- */
@@ -2475,11 +2486,11 @@ function buildSync() {
     out.tasks.push({ id: p.id, at: at, title: 'Due tomorrow: ' + p.t, text: (p.c && S.courses[p.c] ? co(p.c).name + ' · ' : '') + (p.ts ? 'Due ' + fmt12(p.ts) : 'Due ' + fmtShort(p.d)) });
   });
   for (var i = 0; i < 8; i++) {
-    var d = addD(T, i), cl = [], due = [];
-    (R.byDate[d] || []).forEach(function (x) { if (x.st === 'X' || !tracked(x.c)) return; cl.push(tparts(x.t)[0] + '  ' + co(x.c).name + (x.st === 'A' || x.st === 'C' ? '  ✓' : x.st === 'M' ? '  ✗' : '')); });
+    var d = addD(T, i), cl = [], due = [], items = [];
+    (R.byDate[d] || []).forEach(function (x) { if (x.st === 'X' || !tracked(x.c)) return; if (items.length < 8) items.push({ key: x.key, t: tparts(x.t)[0], n: co(x.c).name, st: x.st || '', s: started(x) ? 1 : 0 }); cl.push(tparts(x.t)[0] + '  ' + co(x.c).name + (x.st === 'A' || x.st === 'C' ? '  ✓' : x.st === 'M' ? '  ✗' : '')); });
     (R.plByDate[d] || []).forEach(function (it) { if (it.p.k === 'event') cl.push((it.p.ts ? fmt12(it.p.ts).replace(' ', '') : 'All day') + '  ' + it.p.t); });
     S.plans.forEach(function (p) { if (p.k === 'task' && !p.x && (p.d === d || (i === 0 && p.d < T))) due.push((p.d < T ? 'Overdue · ' : '') + p.t + (p.ts && p.d === d ? ' · ' + fmt12(p.ts) : '')); });
-    out.days.push({ d: d, label: fmtLong(d).replace(/^(\w{3})\w*,/, '$1,').replace(/\s\d{4}$/, ''), classes: cl.slice(0, 7), due: due.slice(0, 5) });
+    out.days.push({ d: d, label: fmtLong(d).replace(/^(\w{3})\w*,/, '$1,').replace(/\s\d{4}$/, ''), classes: cl.slice(0, 7), due: due.slice(0, 5), items: items });
   }
   return out;
 }
@@ -2791,6 +2802,7 @@ function cloudForm(M, close) {
   var cloud = nativeCloud(), out = [h('h2', { id: 'mt' }, 'Backup and sync')];
   out.push(h('p', { class: 'rem-note' }, 'Files are saved to your own Google Drive as ordinary readable files. Anyone who can open that Drive account, or a link you share, can read them. Do not share the sync file with people you do not trust.'));
   out.push(h('h3', null, '1. Daily backup to Google Drive'));
+  if (S.drive.on) out.push(healthRow());
   if (!cloud) out.push(h('p', null, 'Daily backup is available in the Android app.'));
   else if (!S.drive.on) {
     out.push(h('p', null, 'Every night about 10 pm, the app saves one file (' + DRV_NAME + ') to Drive, replacing the previous night\'s. It contains your whole timetable, attendance, plans and settings.'),
@@ -2861,6 +2873,146 @@ function unlockForm(M, close) {
     M.err ? h('div', { class: 'err', role: 'alert' }, M.err) : null,
     h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', onclick: unlockRestore }, 'Open'))
   ];
+}
+
+/* ----- version, what's new, backup health, term rollover, share a day ----- */
+var APP_VERSION = '5.1', APP_BUILD = 'dev';
+var WHATS_NEW = [
+  { v: '5.1', items: [
+    'Start a new term: Settings walks you through the final report, archiving finished courses and importing the new timetable.',
+    'Share a day\'s classes as text (WhatsApp, Messages) from the Share button on any day.',
+    'The home-screen widget now has tick and cross buttons, so you can mark a class without opening the app.',
+    'A cleaner app icon, with a themed version for Android 13 and later.',
+    'Settings shows the app version and whether last night\'s Drive backup ran.'] },
+  { v: '5.0', items: [
+    'A setup checklist for first use, and a file guide with sample timetable and calendar files.',
+    'Daily backup to your Google Drive, and sync between two phones.',
+    'Credits can be corrected per course.'] }
+];
+function cmpVer(a, b) {
+  var x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number);
+  for (var i = 0; i < Math.max(x.length, y.length); i++) { var d = (x[i] || 0) - (y[i] || 0); if (d) return d; }
+  return 0;
+}
+function versionText() { return 'Class Planner ' + APP_VERSION + (/^\d+$/.test(APP_BUILD) ? ' (build ' + APP_BUILD + ')' : ''); }
+function openWhatsNew(all) {
+  var seen = all ? '' : (S.onb.seenVer || '');
+  var list = WHATS_NEW.filter(function (e) { return cmpVer(e.v, seen) > 0; });
+  S.modal = { stage: 'whatsnew', list: list.length ? list : WHATS_NEW.slice(0, 1) }; render();
+}
+function checkWhatsNew() {          // after an update, once
+  if (S.mode !== 'local' || S.onb.seenVer === APP_VERSION) return;
+  var prior = S.onb.seenVer || '';
+  if (hasAnyData() && !S.modal) S.modal = { stage: 'whatsnew', list: WHATS_NEW.filter(function (e) { return cmpVer(e.v, prior) > 0; }) };
+  S.onb.seenVer = APP_VERSION; saveDev();
+}
+function whatsNewForm(M, close) {
+  return [h('h2', { id: 'mt' }, 'What\'s new'),
+    M.list.map(function (e) { return h('div', null, h('h3', null, 'Version ' + e.v), h('ul', { class: 'gl' }, e.items.map(function (i) { return h('li', null, i); }))); }),
+    h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'wn-ok', onclick: close }, 'Got it'))];
+}
+/* backup health: a tick when last night's backup ran, amber after two missed nights */
+function missedNights(atMs, nowMs) {
+  var n = 0, d = new Date(atMs); d.setHours(22, 0, 0, 0);
+  if (d.getTime() <= atMs) d.setDate(d.getDate() + 1);
+  while (d.getTime() <= nowMs && n < 60) { n++; d.setDate(d.getDate() + 1); }
+  return n;
+}
+function bkHealth() {
+  if (!nativeCloud()) return null;
+  if (!S.drive.on) return { lvl: 'off', t: 'No daily Drive backup set up' };
+  var st = driveState() || {}, at = Math.max(st.at || 0, S.drive.at ? Date.parse(S.drive.at) : 0), err = st.ok === false ? st.err : (S.drive.err || '');
+  var now = Date.now();
+  if (!at) return { lvl: 'wait', t: 'Waiting for the first backup (tonight at about 10 pm)', err: err };
+  var n = missedNights(at, now), a = new Date(at), when = whenText(a.toISOString());
+  var last = iso(a) === addD(todayS(), -1) && a.getHours() >= 18;
+  if (n === 0) return { lvl: 'ok', t: iso(a) === todayS() ? 'Backed up ' + when : last ? 'Backed up last night' : 'Backed up ' + when, err: err };
+  if (n === 1) return { lvl: 'late', t: 'Last night\'s backup has not run yet. Last backup ' + when, err: err };
+  return { lvl: 'warn', t: 'No backup for ' + n + ' nights. Last backup ' + when, err: err };
+}
+function healthRow() {
+  var hl = bkHealth(); if (!hl) return null;
+  return h('div', { class: 'health ' + hl.lvl, role: 'status' }, h('span', { class: 'hk', 'aria-hidden': 'true' }, hl.lvl === 'ok' ? '✓' : hl.lvl === 'warn' ? '!' : '•'),
+    h('span', null, hl.t, hl.err && hl.lvl !== 'ok' ? h('span', { class: 'rem-note', style: 'display:block;font-weight:400' }, hl.err) : null));
+}
+/* share a day's classes as text */
+function dayText(d) {
+  var list = (R.byDate[d] || []).filter(function (x) { return x.st !== 'X' && tracked(x.c); }).sort(function (a, b) { return startMin(a.t) - startMin(b.t); });
+  var info = R.dayInfo[d] || null, evs = R.evByDate[d] || [], i = S.info || {};
+  var lines = ['*' + fmtLong(d) + '*'];
+  evs.forEach(function (e) { lines.push(e.title); });
+  if (info && info.label && !evs.length) lines.push(info.label);
+  if (!list.length) lines.push(evs.length || (info && info.label) ? 'No classes' : 'No classes scheduled');
+  list.forEach(function (x) { lines.push(x.t.replace(/\s*[-–—]\s*/, ' - ') + '  ' + co(x.c).name + ' (' + co(x.c).code + ')'); });
+  if (list.length && i.venue) lines.push('Venue ' + i.venue);
+  return lines.join('\n');
+}
+function shareDay(d) {
+  var text = dayText(d), B = window.AndroidBridge;
+  if (B && B.shareText) { B.shareText(text); return; }
+  if (navigator.share) { navigator.share({ text: text }).catch(function () {}); return; }
+  S.modal = { stage: 'sharetext', text: text }; render();
+}
+/* term rollover */
+function rollBanner() {
+  if (S.mode !== 'local' || !hasAnyData() || S.onb.rollHide === todayS()) return null;
+  var keys = Object.keys(R.byCourse).filter(tracked);
+  if (!keys.length || !keys.every(finishedCourse)) return null;
+  return h('div', { class: 'banner', role: 'status' }, h('span', null, 'All your courses have finished. Ready for the next term?'),
+    h('span', { class: 'actions' },
+      h('button', { type: 'button', class: 'btn sm pri', onclick: openRollover }, 'Start a new term'),
+      h('button', { type: 'button', class: 'btn sm', onclick: function () { S.onb.rollHide = todayS(); saveDev(); render(); } }, 'Later')));
+}
+function openRollover() {
+  var sel = {};
+  Object.keys(R.byCourse).filter(tracked).forEach(function (ck) { sel[ck] = finishedCourse(ck); });
+  S.modal = { stage: 'rollover', sel: sel, archived: 0 }; render();
+}
+function rolloverForm(M, close) {
+  var keys = Object.keys(R.byCourse).filter(tracked).sort(function (a, b) { return co(a).name.localeCompare(co(b).name); });
+  var picked = keys.filter(function (k) { return M.sel[k]; });
+  var arch = Object.keys(S.archived).filter(function (k) { return S.courses[k]; }).length;
+  return [
+    h('h2', { id: 'mt' }, 'Start a new term'),
+    h('p', null, 'Three steps. Nothing is deleted: finished courses stay in your backups and in reports.'),
+    h('h3', null, '1. Save this term\'s attendance report'),
+    h('p', { class: 'rem-note', style: 'margin:0' }, 'A final record of every course, with the class-by-class list. Keep it for condonation or your own records.'),
+    h('div', { class: 'actions', style: 'justify-content:flex-start' },
+      h('button', { type: 'button', class: 'btn', 'data-fk': 'ro-pdf', onclick: function () { saveReport('pdf', false); } }, ic('down'), 'PDF'),
+      h('button', { type: 'button', class: 'btn', 'data-fk': 'ro-xls', onclick: function () { saveReport('xlsx', false); } }, ic('down'), 'Spreadsheet')),
+    h('h3', null, '2. Archive finished courses'),
+    keys.length ? [h('p', { class: 'rem-note', style: 'margin:0' }, 'Archived courses leave Attendance and Forecast. Reports can still include them ("include archived courses").'),
+      keys.map(function (ck) {
+        var f = stats(ck), last = lastClass(ck);
+        return h('label', { class: 'arow' }, h('input', { type: 'checkbox', 'data-fk': 'ro-' + ck, checked: M.sel[ck] ? true : null, onchange: function (e) { M.sel[ck] = e.target.checked; render(); } }),
+          h('span', null, h('span', { class: 't' }, co(ck).name + ' (' + co(ck).code + ')'), h('br'), h('span', { class: 's' }, f.held + ' of ' + f.term + ' held' + (f.pct != null ? ' · ' + fp1(f.pct) + '%' : '') + (finishedCourse(ck) ? ' · finished' + (last ? ' ' + fmtShort(last) : '') : ' · classes still to come'))));
+      }),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' },
+        h('button', { type: 'button', class: 'btn pri', disabled: picked.length ? null : true, 'data-fk': 'ro-arch', onclick: function () { rollArchive(picked); } }, picked.length ? 'Archive ' + picked.length + (picked.length === 1 ? ' course' : ' courses') : 'Nothing selected'))]
+      : h('p', { class: 'rem-note', style: 'margin:0' }, M.archived ? '✓ ' + M.archived + ' archived. Nothing else is active.' : 'No active courses.'),
+    M.archived && keys.length ? h('p', { class: 'rem-note', style: 'margin:0' }, '✓ ' + M.archived + ' archived so far.') : null,
+    h('h3', null, '3. Bring in the new term'),
+    h('p', { class: 'rem-note', style: 'margin:0' }, 'Import the new timetable (and the academic calendar if you have it). After that, check the new courses and their credits. The file guide has the format and sample files.'),
+    h('div', { class: 'actions', style: 'justify-content:flex-start' },
+      h('button', { type: 'button', class: 'btn pri', 'data-fk': 'ro-imp', onclick: function () { S.roll = true; S.modal = { stage: 'pick' }; render(); } }, ic('up'), 'Import the new timetable'),
+      h('button', { type: 'button', class: 'btn', onclick: function () { openGuide(false); } }, ic('doc'), 'File guide')),
+    h('div', { class: 'actions' }, h('span', { class: 'spacer' }), h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))
+  ];
+}
+function fp1(v) { var r = Math.round(v * 10) / 10; return r === Math.floor(r) ? String(r) : r.toFixed(1); }
+function rollArchive(keys) {
+  keys.forEach(function (k) { S.archived[k] = true; });
+  save('pf');
+  var M = S.modal; if (M && M.stage === 'rollover') { M.archived = (M.archived || 0) + keys.length; keys.forEach(function (k) { delete M.sel[k]; }); }
+  render(); toast(keys.length + (keys.length === 1 ? ' course' : ' courses') + ' archived');
+}
+function shareTextForm(M, close) {
+  return [h('h2', { id: 'mt' }, 'Share this day'),
+    h('p', null, 'Copy this and paste it into WhatsApp or a message.'),
+    h('textarea', { id: 'sh-t', readonly: 'readonly', rows: '8', style: 'width:100%;font:inherit' }, M.text),
+    h('div', { class: 'actions' }, h('span', { class: 'spacer' }),
+      h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'),
+      h('button', { type: 'button', class: 'btn pri', onclick: function () { var t = document.getElementById('sh-t'); t.select(); try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Select the text and copy it.'); } } }, 'Copy'))];
 }
 
 /* ----- modal ----- */
@@ -2999,6 +3151,9 @@ function modal() {
   else if (M.stage === 'move') body = mvForm();
   else if (M.stage === 'report') body = repForm();
   else if (M.stage === 'guide') body = guideForm(M);
+  else if (M.stage === 'whatsnew') body = whatsNewForm(M, close);
+  else if (M.stage === 'rollover') body = rolloverForm(M, close);
+  else if (M.stage === 'sharetext') body = shareTextForm(M, close);
   else if (M.stage === 'courses') body = coursesForm(M, close);
   else if (M.stage === 'cloud') body = cloudForm(M, close);
   else if (M.stage === 'conflict') body = conflictForm(M);
@@ -3027,6 +3182,7 @@ function modal() {
       remBox,
       nativeCloud() || true ? [h('h3', null, 'Google Drive backup and sync'),
         h('p', null, nativeCloud() ? (S.drive.on ? 'Daily backup to Drive is on' + (S.sync.on ? ', and sync is on.' : '.') : 'Set up a daily backup to your Google Drive, and optionally sync two phones.') : 'Daily Drive backup and sync are available in the Android app.'),
+        healthRow(),
         nativeCloud() ? h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn pri', 'data-fk': 'open-cloud', onclick: openCloud }, S.drive.on || S.sync.on ? 'Manage backup and sync' : 'Set up')) : null,
         h('hr', { class: 'sep' })] : null,
       h('h3', null, 'Backup and restore'),
@@ -3042,10 +3198,15 @@ function modal() {
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn', onclick: function () { openGuide(false); } }, ic('doc'), 'File guide and samples'),
         h('button', { type: 'button', class: 'btn', onclick: openCourses }, 'Courses and credits'),
+        h('button', { type: 'button', class: 'btn', 'data-fk': 'start-term', onclick: openRollover }, 'Start a new term…'),
         S.onb.hide ? h('button', { type: 'button', class: 'btn', onclick: function () { S.onb.hide = false; saveDev(); S.modal = null; setTab('tt'); } }, 'Show the setup checklist') : null),
       h('div', { class: 'actions', style: 'justify-content:flex-start' },
         h('button', { type: 'button', class: 'btn', onclick: function () { openArchive(null); } }, 'End of term: archive finished courses'),
         S.undo ? h('button', { type: 'button', class: 'btn', onclick: undoImport }, 'Undo last import (' + S.undo.kind + ', ' + new Date(S.undo.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ')') : null),
+      h('hr', { class: 'sep' }),
+      h('h3', null, 'About'),
+      h('p', { 'data-fk': 'about' }, versionText()),
+      h('div', { class: 'actions', style: 'justify-content:flex-start' }, h('button', { type: 'button', class: 'btn', 'data-fk': 'whatsnew', onclick: function () { openWhatsNew(true); } }, 'What\'s new')),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Close'))];
   } else if (M.stage === 'restore') {
     body = [
@@ -3054,7 +3215,7 @@ function modal() {
       h('div', { class: 'warns' }, 'This replaces everything currently in the app: timetable, calendar, attendance and your plans.'),
       h('div', { class: 'actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { type: 'button', class: 'btn pri', 'data-fk': 'apply', onclick: applyRestore }, 'Restore'))];
   }
-  if (M.stage === 'plan' || M.stage === 'guide' || M.stage === 'courses' || M.stage === 'cloud' || M.stage === 'conflict' || M.stage === 'unlock' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report' || M.stage === 'search' || M.stage === 'archive') {}
+  if (M.stage === 'plan' || M.stage === 'whatsnew' || M.stage === 'rollover' || M.stage === 'sharetext' || M.stage === 'guide' || M.stage === 'courses' || M.stage === 'cloud' || M.stage === 'conflict' || M.stage === 'unlock' || M.stage === 'data' || M.stage === 'restore' || M.stage === 'move' || M.stage === 'report' || M.stage === 'search' || M.stage === 'archive') {}
   else if (M.stage === 'pick' || M.stage === 'error') {
     body = [
       h('h2', { id: 'mt' }, 'Import'),

@@ -303,6 +303,21 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void scheduleBackup(boolean on) { BackupAlarm.setEnabled(getApplicationContext(), on); }
 
+        /** Shares plain text (a day's classes) through the usual share sheet: WhatsApp, Messages... */
+        @JavascriptInterface
+        public void shareText(final String text) {
+            runOnUiThread(() -> {
+                try {
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType("text/plain");
+                    send.putExtra(Intent.EXTRA_TEXT, text);
+                    startActivity(Intent.createChooser(send, "Share schedule"));
+                } catch (Exception e) {
+                    toast("Could not open the share sheet.");
+                }
+            });
+        }
+
         private void toast(final String msg) {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show());
         }

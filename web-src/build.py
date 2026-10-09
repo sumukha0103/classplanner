@@ -7,6 +7,7 @@ p += '\n' + rd('export.js')
 p += '\n' + rd('crypto.js')
 # drop the node-only export line
 p = "\n".join(l for l in p.split("\n") if not l.startswith("if (typeof module"))
+t = t.replace("'/*BUILD*/'", repr(os.environ.get('BUILD_NUM', 'dev')))
 assert '/*PARSER*/' in t
 if len(sys.argv) > 1 and sys.argv[1] == 'apk':
     # offline phone build: no CDN font/script, bundled xlsx reader, full document skeleton

@@ -155,6 +155,15 @@ final class Scheduler {
                     JSONArray cls = o.optJSONArray("classes"), left = new JSONArray();
                     if (cls != null) for (int k = 0; k < cls.length(); k++) if (!key.equals(cls.getJSONObject(k).optString("key"))) left.put(cls.get(k));
                     o.put("classes", left);
+                    // widget rows: show the new answer straight away
+                    JSONArray days = o.optJSONArray("days");
+                    if (days != null) for (int k = 0; k < days.length(); k++) {
+                        JSONArray items = days.getJSONObject(k).optJSONArray("items");
+                        if (items != null) for (int q = 0; q < items.length(); q++) {
+                            JSONObject it = items.getJSONObject(q);
+                            if (key.equals(it.optString("key"))) it.put("st", st);
+                        }
+                    }
                     p.edit().putString("data", o.toString()).apply();
                 }
             } catch (Exception ignored) { }
