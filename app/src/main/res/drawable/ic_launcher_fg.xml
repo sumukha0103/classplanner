@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- calendar body -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,40h40a4,4 0 0 1 4,4v28a4,4 0 0 1 -4,4h-40a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4z" />
+    <!-- header band -->
+    <path android:fillColor="#C9CFF5" android:pathData="M34,40h40a4,4 0 0 1 4,4v4h-48v-4a4,4 0 0 1 4,-4z" />
+    <!-- binder rings -->
+    <path android:fillColor="#FFFFFF" android:pathData="M40,34h4v10h-4z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M64,34h4v10h-4z" />
+    <!-- tick -->
+    <path android:strokeColor="#3A4BC4" android:strokeWidth="4.5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:fillColor="#00000000" android:pathData="M42,63l8,8l16,-16" />
+</vector>

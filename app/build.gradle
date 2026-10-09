@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.classplanner.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.classplanner.app'
+        minSdk 29
+        targetSdk 34
+        // CI passes -Pvc=<run number> so every new build can be installed over the previous one
+        versionCode((project.findProperty('vc') ?: '1') as int)
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        // Fixed key (committed on purpose) so updates install over older versions and keep your data.
+        release {
+            storeFile file('planner.keystore')
+            storePassword 'classplanner'
+            keyAlias 'planner'
+            keyPassword 'classplanner'
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}

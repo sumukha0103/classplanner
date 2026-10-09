@@ -1,0 +1,48 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the offline web page
+        run: python3 web-src/build.py apk
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build signed APK
+        run: gradle assembleRelease -Pvc=${{ github.run_number }} --no-daemon
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk ClassPlanner.apk
+
+      - name: Keep a copy on the run page
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassPlanner-apk
+          path: ClassPlanner.apk
+
+      - name: Publish as a release (so you can download it on your phone)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest ClassPlanner.apk \
+            --title "Class Planner (build ${{ github.run_number }})" \
+            --notes "Open this page on your phone and tap ClassPlanner.apk to download and install."
