@@ -1,0 +1,39 @@
+{
+  "name": "class-planner",
+  "productName": "Class Planner",
+  "version": "5.2.0",
+  "description": "Class Planner for Windows: timetable, attendance and plans. Everything stays on this computer.",
+  "main": "main.js",
+  "author": "Class Planner",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.classplanner.desktop",
+    "productName": "Class Planner",
+    "copyright": "Class Planner",
+    "files": ["main.js", "app/index.html", "package.json"],
+    "directories": { "buildResources": "build", "output": "dist" },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Class Planner",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ClassPlanner-Setup.exe"
+    },
+    "portable": { "artifactName": "ClassPlanner-Portable.exe" }
+  }
+}

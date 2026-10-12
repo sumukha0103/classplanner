@@ -9,7 +9,7 @@ p += '\n' + rd('crypto.js')
 p = "\n".join(l for l in p.split("\n") if not l.startswith("if (typeof module"))
 t = t.replace("'/*BUILD*/'", repr(os.environ.get('BUILD_NUM', 'dev')))
 assert '/*PARSER*/' in t
-if len(sys.argv) > 1 and sys.argv[1] == 'apk':
+if len(sys.argv) > 1 and sys.argv[1] in ('apk', 'desktop'):
     # offline phone build: no CDN font/script, bundled xlsx reader, full document skeleton
     t = re.sub(r'<link rel="stylesheet" href="https://fonts[^>]*>\n', '', t)
     t = t.replace('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>',
@@ -19,7 +19,8 @@ if len(sys.argv) > 1 and sys.argv[1] == 'apk':
             '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
             '<meta name="color-scheme" content="light dark">\n</head>\n<body>\n')
     out = head + t.replace('/*PARSER*/', p) + '\n</body>\n</html>\n'
-    dest = os.path.join(HERE, '..', 'app', 'src', 'main', 'assets', 'index.html')
+    dest = (os.path.join(HERE, '..', 'desktop', 'app', 'index.html') if sys.argv[1] == 'desktop'
+            else os.path.join(HERE, '..', 'app', 'src', 'main', 'assets', 'index.html'))
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     open(dest, 'w', encoding='utf-8').write(out)
     print('built apk web', len(out), 'bytes')

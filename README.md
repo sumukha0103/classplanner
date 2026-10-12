@@ -1,4 +1,4 @@
-# Class Planner (Android)
+# Class Planner (Android and Windows)
 
 Offline timetable, academic calendar, own plans and attendance tracker. Everything is stored only on the phone.
 
@@ -14,3 +14,11 @@ The app has no INTERNET permission. Google Drive is reached through Android's fi
 - **Daily backup.** The page stages a copy after every change (`CloudStore.stage`). An alarm around 22:00 (`BackupAlarm`) writes it to the Drive file you chose, retrying every two hours up to four times if it fails. One rolling file, `ClassPlanner-backup.json`. Restore with "Restore from a backup file".
 - **Sync.** One shared file `ClassPlanner-sync.json`. Each write carries a random revision; a phone pulls when only the file changed, pushes when only it changed, and offers Combine / Keep mine / Use theirs when both changed. A snapshot is kept for "Undo last sync". Reminder settings stay per phone.
 - Not covered by automated tests (need a real phone and Drive): the Android file screen, Drive's own provider behaviour, and the background write at night.
+
+## Windows app
+
+`desktop/` is a small Electron shell around the same offline page (`python3 web-src/build.py desktop` writes `desktop/app/index.html`). The `windows` job in the workflow builds `ClassPlanner-Setup.exe` (per-user install, no admin) and `ClassPlanner-Portable.exe`, starts the built app once with `--smoke=` to check it opens, and the `release` job publishes them next to the APK.
+
+- Data lives only in the computer's app-data folder (`%APPDATA%\Class Planner`), shared by the installed and portable versions. No network access is used.
+- The Android-only parts (widget, notifications, Drive picker, nightly backup) are not in the Windows app. It behaves like the browser version: "Back up now" saves a file through the normal Save As box, and "Restore from a backup file" loads one. A phone backup can be restored on the laptop and the other way round.
+- The exe is not code-signed, so Windows SmartScreen shows "Windows protected your PC": More info, then Run anyway.

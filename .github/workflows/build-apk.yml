@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   build:
+    name: Android APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,11 +51,76 @@ jobs:
           name: ClassPlanner-apk
           path: ClassPlanner.apk
 
-      - name: Publish as a release (so you can download it on your phone)
+
+  windows:
+    name: Windows app
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build the offline web page
+        shell: bash
+        env:
+          BUILD_NUM: ${{ github.run_number }}
+        run: python web-src/build.py desktop
+
+      - name: Build the Windows installer and portable app
+        shell: bash
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npm run dist
+
+      - name: Start the built app once and check that it opens
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'desktop/dist/win-unpacked/Class Planner.exe'
+          $out = Join-Path $PWD 'smoke.txt'
+          $p = Start-Process -FilePath $exe -ArgumentList "--smoke=$out" -PassThru
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Host 'app did not finish'; exit 1 }
+          if (Test-Path $out) { Get-Content $out } else { Write-Host 'no result file'; exit 1 }
+          if ($p.ExitCode -ne 0) { exit 1 }
+
+      - name: Keep the Windows files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassPlanner-windows
+          path: |
+            desktop/dist/ClassPlanner-Setup.exe
+            desktop/dist/ClassPlanner-Portable.exe
+
+  release:
+    name: Publish release
+    needs: [build, windows]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ClassPlanner-apk
+          path: out
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.windows.result == 'success' }}
+        with:
+          name: ClassPlanner-windows
+          path: out
+      - name: Publish as a release (phone and Windows downloads)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
+          ls -la out
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest ClassPlanner.apk \
+          gh release create latest out/* --target ${{ github.sha }} \
             --title "Class Planner (build ${{ github.run_number }})" \
-            --notes "Open this page on your phone and tap ClassPlanner.apk to download and install."
+            --notes "Phone: tap ClassPlanner.apk. Windows: ClassPlanner-Setup.exe installs it for your user account (no admin needed); ClassPlanner-Portable.exe runs without installing."
